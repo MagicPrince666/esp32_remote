@@ -92,8 +92,8 @@ void adc_read_task(void *param)
     uint32_t last_ch0_data = 0;
     uint32_t last_ch3_data = 0;
     uint32_t last_ch4_data = 0;
-    uint32_t last_ch5_data = 0;
     uint32_t last_ch6_data = 0;
+    uint32_t last_ch7_data = 0;
 
     while (1) {
         /**
@@ -133,14 +133,14 @@ void adc_read_task(void *param)
                                 last_ch4_data = data;
                                 ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
-                        } else if (chan_num == 5) {
-                            if (last_ch5_data != data) {
-                                last_ch5_data = data;
-                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
-                            }
-                        }  else if (chan_num == 6) {
+                        } else if (chan_num == 6) {
                             if (last_ch6_data != data) {
                                 last_ch6_data = data;
+                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
+                            }
+                        }  else if (chan_num == 7) {
+                            if (last_ch7_data != data) {
+                                last_ch7_data = data;
                                 ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
                         }
@@ -153,7 +153,7 @@ void adc_read_task(void *param)
                  * To avoid a task watchdog timeout, add a delay here. When you replace the way you process the data,
                  * usually you don't need this delay (as this task will block for a while).
                  */
-                vTaskDelay(10);
+                vTaskDelay(1);
             } else if (ret == ESP_ERR_TIMEOUT) {
                 // We try to read `EXAMPLE_READ_LEN` until API returns timeout, which means there's no available data
                 break;
