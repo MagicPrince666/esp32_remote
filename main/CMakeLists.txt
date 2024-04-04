@@ -4,4 +4,5 @@ idf_component_register(SRCS
     "rocker.cpp"
     "pwm_ctrl.cpp"
     "serial.cpp"
+    "ld06_lidar.cpp"
     INCLUDE_DIRS ".")

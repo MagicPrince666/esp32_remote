@@ -5,6 +5,14 @@
 extern "C" {
 #endif
 
+class Serial
+{
+private:
+public:
+    Serial();
+    ~Serial();
+};
+
 void rx_task(void *arg);
 
 #ifdef __cplusplus
