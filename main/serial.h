@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void uart_select_task(void *arg);
+void rx_task(void *arg);
 
 #ifdef __cplusplus
 } /*extern "C"*/
