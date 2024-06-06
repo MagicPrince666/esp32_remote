@@ -18,7 +18,12 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "rocker.h"
+
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9341
 #include "esp_lcd_ili9341.h"
+#elif CONFIG_EXAMPLE_LCD_CONTROLLER_GC9A01
+#include "esp_lcd_gc9a01.h"
+#endif
 
 #if CONFIG_EXAMPLE_LCD_TOUCH_CONTROLLER_STMPE610
 #include "esp_lcd_touch_stmpe610.h"
@@ -46,8 +51,13 @@ static const char *TAG = "example";
 #define EXAMPLE_PIN_NUM_TOUCH_INT      33
 
 // The pixel number in horizontal and vertical
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9341
 #define EXAMPLE_LCD_H_RES              240
 #define EXAMPLE_LCD_V_RES              320
+#elif CONFIG_EXAMPLE_LCD_CONTROLLER_GC9A01
+#define EXAMPLE_LCD_H_RES              240
+#define EXAMPLE_LCD_V_RES              240
+#endif
 // Bit number used to represent command and parameter
 #define EXAMPLE_LCD_CMD_BITS           8
 #define EXAMPLE_LCD_PARAM_BITS         8
@@ -240,13 +250,19 @@ void app_main(void)
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
         .bits_per_pixel = 16,
     };
-
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9341
     ESP_LOGI(TAG, "Install ILI9341 panel driver");
     ESP_ERROR_CHECK(esp_lcd_new_panel_ili9341(io_handle, &panel_config, &panel_handle));
+#elif CONFIG_EXAMPLE_LCD_CONTROLLER_GC9A01
+    ESP_LOGI(TAG, "Install GC9A01 panel driver");
+    ESP_ERROR_CHECK(esp_lcd_new_panel_gc9a01(io_handle, &panel_config, &panel_handle));
+#endif
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
-
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_GC9A01
+    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
+#endif
     ESP_ERROR_CHECK(esp_lcd_panel_mirror(panel_handle, true, false));
 
     // user can flush pre-defined pattern to the screen before we turn on the screen or backlight
