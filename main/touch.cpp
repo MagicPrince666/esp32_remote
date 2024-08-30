@@ -3,8 +3,6 @@
 #include "stdlib.h"
 #include <unistd.h>
 
-#define SPI_Control
-
 _m_tp_dev tp_dev =
     {
         {TP_Init},
@@ -23,7 +21,6 @@ _m_tp_dev tp_dev =
 uint8_t CMD_RDX = 0XD0;
 uint8_t CMD_RDY = 0X90;
 
-// #define SPI_Control
 spi_device_handle_t tp_spi;
 
 uint8_t touch_data(const uint8_t *data, int len)
@@ -41,25 +38,6 @@ uint8_t touch_data(const uint8_t *data, int len)
     return t.rx_data[0];
 }
 
-#ifndef SPI_Control
-// SPI写数据
-// 向触摸屏IC写入1byte数据
-// num:要写入的数据
-void TP_Write_Byte(uint8_t num)
-{
-    uint8_t count = 0;
-    for (count = 0; count < 8; count++) {
-        if (num & 0x80)
-            TDIN_1;
-        else
-            TDIN_0;
-        num <<= 1;
-        TCLK_0;
-        // usleep(1);
-        TCLK_1; // 上升沿有效
-    }
-}
-#endif
 // SPI读数据
 // 从触摸屏IC读取adc值
 // CMD:指令
@@ -67,34 +45,6 @@ void TP_Write_Byte(uint8_t num)
 // spi_transaction_t t;
 uint16_t TP_Read_AD(uint8_t CMD)
 {
-#ifndef SPI_Control
-    uint8_t count = 0;
-    uint16_t Num  = 0;
-    TCLK_0;             // 先拉低时钟
-    TDIN_0;             // 拉低数据线
-    TCS_0;              // 选中触摸屏IC
-    TP_Write_Byte(CMD); // 发送命令字
-    usleep(6);          // ADS7846的转换时间最长为6us
-    TCLK_0;
-    usleep(1);
-    TCLK_1; // 给1个时钟，清除BUSY
-    usleep(1);
-    TCLK_0;
-    for (count = 0; count < 16; count++) // 读出16位数据,只有高12位有效
-    {
-        Num <<= 1;
-        TCLK_0; // 下降沿有效
-        // usleep(1);
-        TCLK_1;
-        if (DOUT) {
-            Num++;
-        }
-    } // 只有高12位有效.
-    Num >>= 4;
-    TCS_1; // 释放片选
-
-#else
-
     uint16_t Num = 0;
 
     touch_data(&CMD, 1);
@@ -103,8 +53,6 @@ uint16_t TP_Read_AD(uint8_t CMD)
     Num = touch_data(&CMD, 1) << 8;
     Num |= touch_data(&CMD, 1);
     Num >>= 4; // 只有高12位有效.
-
-#endif
 
     return (Num);
 }
@@ -559,10 +507,6 @@ uint8_t TP_Init(void)
     // Attach the touch to the SPI bus
     ret = spi_bus_add_device(VSPI_HOST, &devcfg, &tp_spi);
     assert(ret == ESP_OK);
-
-    TCS_1;
-    TDIN_1;
-    TCLK_1;
 
     TP_Read_XY(&tp_dev.x[0], &tp_dev.y[0]); // 第一次读取初始化
     if (TP_Get_Adjdata()) {

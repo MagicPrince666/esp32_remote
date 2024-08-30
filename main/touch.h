@@ -47,26 +47,11 @@ typedef struct
 extern int run;  
 extern _m_tp_dev tp_dev;	 	//触屏控制器在touch.c里面定义
 
-#define PIN_NUM_MISO 5 	// SPI MISO
-#define PIN_NUM_MOSI 18		// SPI MOSI
-#define PIN_NUM_CLK  23		// SPI CLOCK pin
-
-#define PIN_NUM_TCS   0		// Touch screen CS pin
-#define PIN_NUM_TIRQ   2		// Touch screen IRQ pin
+#define PIN_NUM_TCS   22		// Touch screen CS pin
+#define PIN_NUM_TIRQ   33		// Touch screen IRQ pin
 
 //电阻屏芯片连接引脚	   
 #define PEN  		gpio_get_level(PIN_NUM_TIRQ)  	//PF10 INT
-#define DOUT 		gpio_get_level(PIN_NUM_MISO)   	//PF8  MISO
-
-#define TDIN_1 		gpio_set_level(PIN_NUM_MOSI, 1)  	// MOSI
-#define TDIN_0 		gpio_set_level(PIN_NUM_MOSI, 0) 
-
-#define TCLK_1 		gpio_set_level(PIN_NUM_CLK, 1)   	// SCLK
-#define TCLK_0 		gpio_set_level(PIN_NUM_CLK, 0) 
-
-#define TCS_1  		gpio_set_level(PIN_NUM_TCS, 1)   	// CS 
-#define TCS_0  		gpio_set_level(PIN_NUM_TCS, 0) 
-
    
 //电阻屏函数
 void TP_Write_Byte(uint8_t num);						//向控制芯片写入一个数据
