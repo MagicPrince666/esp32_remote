@@ -121,33 +121,34 @@ void adc_read_task(void *param)
                         if (chan_num == 0) {
                             if (last_ch0_data != data) {
                                 last_ch0_data = data;
-                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
                         } else if (chan_num == 3) {
                             if (last_ch3_data != data) {
                                 last_ch3_data = data;
-                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
                         } else if (chan_num == 4) {
                             if (last_ch4_data != data) {
                                 last_ch4_data = data;
-                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
                         } else if (chan_num == 6) {
                             if (last_ch6_data != data) {
                                 last_ch6_data = data;
-                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
                         }  else if (chan_num == 7) {
                             if (last_ch7_data != data) {
                                 last_ch7_data = data;
-                                ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                             }
                         }
                     } else {
                         ESP_LOGW(TAG, "Invalid data [%s_%" PRIu32 "_%" PRIx32 "]", unit, chan_num, data);
                     }
                 }
+                ESP_LOGI(TAG, "lx = %"PRIx32"\tly = %"PRIx32"\trx = %"PRIx32"\try = %"PRIx32"\tpwoer = %"PRIx32, 
+                    last_ch6_data,
+                    last_ch7_data,
+                    last_ch3_data,
+                    last_ch0_data,
+                    last_ch4_data);
                 /**
                  * Because printing is slow, so every time you call `ulTaskNotifyTake`, it will immediately return.
                  * To avoid a task watchdog timeout, add a delay here. When you replace the way you process the data,
