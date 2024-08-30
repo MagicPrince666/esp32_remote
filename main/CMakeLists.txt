@@ -5,4 +5,5 @@ idf_component_register(SRCS
     "pwm_ctrl.cpp"
     "serial.cpp"
     "ld06_lidar.cpp"
+#    "touch.cpp"
     INCLUDE_DIRS ".")
