@@ -1,22 +1,17 @@
 #ifndef __SERIAL_H__
 #define __SERIAL_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 class Serial
 {
 private:
+    int RX_BUF_SIZE;
 public:
     Serial();
     ~Serial();
+
+    int sendData(const char* data, const int lenght);
+
+    int RecvData(char* data, const int lenght);
 };
-
-void rx_task(void *arg);
-
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
 
 #endif
