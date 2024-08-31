@@ -9,13 +9,13 @@
 #ifndef __LD06_LIDAR_H__
 #define __LD06_LIDAR_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class Ld06Lidar
+{
+public:
+    Ld06Lidar();
+    ~Ld06Lidar();
 
-
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
+private:
+};
 
 #endif
