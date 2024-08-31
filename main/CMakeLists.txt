@@ -1,5 +1,5 @@
 idf_component_register(SRCS 
-    "spi_lcd_touch_example_main.c" 
+    "remote_main.c" 
     "lvgl_demo_ui.c"
     "rocker.cpp"
     "pwm_ctrl.cpp"
@@ -7,5 +7,6 @@ idf_component_register(SRCS
     "ld06_lidar.cpp"
     "spi.cpp"
     "select.cpp"
+    "peripherals.cpp"
 #    "touch.cpp"
     INCLUDE_DIRS ".")

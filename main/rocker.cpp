@@ -1,6 +1,5 @@
 #include <cstring>
 #include "rocker.h"
-#include "esp_adc/adc_continuous.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -72,16 +71,17 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
     *out_handle = handle;
 }
 
-void adc_read_task(void *param)
+void Rocker::adc_read_task(void *param)
 {
+    // Rocker *rocker = (Rocker *)param;
+    adc_continuous_handle_t handle = NULL;
     esp_err_t ret;
     uint32_t ret_num                 = 0;
     uint8_t result[EXAMPLE_READ_LEN] = {0};
     memset(result, 0xcc, EXAMPLE_READ_LEN);
 
     s_task_handle = xTaskGetCurrentTaskHandle();
-
-    adc_continuous_handle_t handle = NULL;
+    
     continuous_adc_init(channel, sizeof(channel) / sizeof(adc_channel_t), &handle);
 
     adc_continuous_evt_cbs_t cbs = {
@@ -165,3 +165,10 @@ void adc_read_task(void *param)
     ESP_ERROR_CHECK(adc_continuous_stop(handle));
     ESP_ERROR_CHECK(adc_continuous_deinit(handle));
 }
+
+Rocker::Rocker() {
+    handle_ = nullptr;
+    xTaskCreate(adc_read_task, "adc_read_task", 4 * 1024, NULL, 5, NULL);
+}
+
+Rocker::~Rocker() {}

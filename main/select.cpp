@@ -23,6 +23,13 @@ void Select::AddFd(int fd, std::function<void()> handler)
     callback_map_[fd] = handler;
 }
 
+void Select::DeleteFd(int fd)
+{
+    if (callback_map_.count(fd)) {
+        callback_map_.erase(fd);
+    }
+}
+
 void Select::Loop() {
     fd_set rfds;
     struct timeval tv = {

@@ -17,7 +17,8 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "lvgl.h"
-#include "rocker.h"
+#include "lvgl_demo_ui.h"
+#include "peripherals.h"
 
 #if CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9341
 #include "esp_lcd_ili9341.h"
@@ -38,17 +39,17 @@ static const char *TAG = "example";
 //////////////////// Please update the following configuration according to your LCD spec //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define EXAMPLE_LCD_PIXEL_CLOCK_HZ     (20 * 1000 * 1000)
-#define EXAMPLE_LCD_BK_LIGHT_ON_LEVEL  1
+#define EXAMPLE_LCD_BK_LIGHT_ON_LEVEL  GPIO_NUM_NC
 #define EXAMPLE_LCD_BK_LIGHT_OFF_LEVEL !EXAMPLE_LCD_BK_LIGHT_ON_LEVEL
-#define EXAMPLE_PIN_NUM_SCLK           16
-#define EXAMPLE_PIN_NUM_MOSI           17
-#define EXAMPLE_PIN_NUM_MISO           21
-#define EXAMPLE_PIN_NUM_LCD_DC         26
-#define EXAMPLE_PIN_NUM_LCD_RST        -1
-#define EXAMPLE_PIN_NUM_LCD_CS         25
-#define EXAMPLE_PIN_NUM_BK_LIGHT       27
-#define EXAMPLE_PIN_NUM_TOUCH_CS       22
-#define EXAMPLE_PIN_NUM_TOUCH_INT      33
+#define EXAMPLE_PIN_NUM_SCLK           GPIO_NUM_16
+#define EXAMPLE_PIN_NUM_MOSI           GPIO_NUM_17
+#define EXAMPLE_PIN_NUM_MISO           GPIO_NUM_21
+#define EXAMPLE_PIN_NUM_LCD_DC         GPIO_NUM_26
+#define EXAMPLE_PIN_NUM_LCD_RST        GPIO_NUM_NC
+#define EXAMPLE_PIN_NUM_LCD_CS         GPIO_NUM_25
+#define EXAMPLE_PIN_NUM_BK_LIGHT       GPIO_NUM_27
+#define EXAMPLE_PIN_NUM_TOUCH_CS       GPIO_NUM_22
+#define EXAMPLE_PIN_NUM_TOUCH_INT      GPIO_NUM_33
 
 // The pixel number in horizontal and vertical
 #if CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9341
@@ -211,14 +212,13 @@ void app_main(void)
     static lv_disp_drv_t disp_drv;      // contains callback functions
 
     ESP_LOGI(TAG, "Turn off LCD backlight");
-    gpio_config_t bk_gpio_config = {
-        .mode = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = 1ULL << EXAMPLE_PIN_NUM_BK_LIGHT
-    };
+    gpio_config_t bk_gpio_config;
+    bk_gpio_config.mode = GPIO_MODE_OUTPUT;
+    bk_gpio_config.pin_bit_mask = 1ULL << EXAMPLE_PIN_NUM_BK_LIGHT;
     ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
 
     ESP_LOGI(TAG, "Initialize SPI bus");
-    spi_bus_config_t buscfg = {
+     spi_bus_config_t buscfg = {
         .sclk_io_num = EXAMPLE_PIN_NUM_SCLK,
         .mosi_io_num = EXAMPLE_PIN_NUM_MOSI,
         .miso_io_num = EXAMPLE_PIN_NUM_MISO,
@@ -226,6 +226,14 @@ void app_main(void)
         .quadhd_io_num = -1,
         .max_transfer_sz = EXAMPLE_LCD_H_RES * 80 * sizeof(uint16_t),
     };
+    // spi_bus_config_t buscfg;
+    // buscfg.sclk_io_num = EXAMPLE_PIN_NUM_SCLK;
+    // buscfg.mosi_io_num = EXAMPLE_PIN_NUM_MOSI;
+    // buscfg.miso_io_num = EXAMPLE_PIN_NUM_MISO;
+    // buscfg.quadwp_io_num = -1;
+    // buscfg.quadhd_io_num = -1;
+    // buscfg.max_transfer_sz = EXAMPLE_LCD_H_RES * 80 * sizeof(uint16_t);
+
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     ESP_LOGI(TAG, "Install panel IO");
@@ -241,6 +249,16 @@ void app_main(void)
         .on_color_trans_done = example_notify_lvgl_flush_ready,
         .user_ctx = &disp_drv,
     };
+    // esp_lcd_panel_io_spi_config_t io_config;
+    // io_config.dc_gpio_num = EXAMPLE_PIN_NUM_LCD_DC;
+    // io_config.cs_gpio_num = EXAMPLE_PIN_NUM_LCD_CS;
+    // io_config.pclk_hz = EXAMPLE_LCD_PIXEL_CLOCK_HZ;
+    // io_config.lcd_cmd_bits = EXAMPLE_LCD_CMD_BITS;
+    // io_config.lcd_param_bits = EXAMPLE_LCD_PARAM_BITS;
+    // io_config.spi_mode = 0;
+    // io_config.trans_queue_depth = 10;
+    // io_config.on_color_trans_done = example_notify_lvgl_flush_ready;
+    // io_config.user_ctx = &disp_drv;
     // Attach the LCD to the SPI bus
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST, &io_config, &io_handle));
 
@@ -299,9 +317,9 @@ void app_main(void)
     lv_init();
     // alloc draw buffers used by LVGL
     // it's recommended to choose the size of the draw buffer(s) to be at least 1/10 screen sized
-    lv_color_t *buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+    lv_color_t *buf1 = (lv_color_t *)heap_caps_malloc(EXAMPLE_LCD_H_RES * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
     assert(buf1);
-    lv_color_t *buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+    lv_color_t *buf2 = (lv_color_t *)heap_caps_malloc(EXAMPLE_LCD_H_RES * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
     assert(buf2);
     // initialize LVGL draw buffers
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * 20);
@@ -341,7 +359,8 @@ void app_main(void)
     assert(lvgl_mux);
     ESP_LOGI(TAG, "Create LVGL task");
     xTaskCreate(example_lvgl_port_task, "LVGL", EXAMPLE_LVGL_TASK_STACK_SIZE, NULL, EXAMPLE_LVGL_TASK_PRIORITY, NULL);
-    xTaskCreate(adc_read_task, "adc_read_task", 4 * 1024, NULL, 5, NULL);
+
+    InitAll();
 
     ESP_LOGI(TAG, "Display LVGL Meter Widget");
     // Lock the mutex due to the LVGL APIs are not thread-safe

@@ -10,11 +10,9 @@
 #include <sys/fcntl.h>
 #include <sys/select.h>
 #include <sys/unistd.h>
+#include "select.h"
 
 static const char *TAG = "uart_select";
-
-#define TXD_PIN 18
-#define RXD_PIN 5
 
 Serial::Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_num, int cts_io_num)
     : uart_num_(uart_num),
@@ -41,20 +39,29 @@ Serial::Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_nu
 
     uart_param_config(uart_num_, &uart_config);
 
-    if ((uart_fd_ = open("/dev/uart/0", O_RDWR)) == -1) {
+    if ((uart_fd_ = open("/dev/uart/1", O_RDWR)) == -1) {
         ESP_LOGE(TAG, "Cannot open UART");
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 
     // We have a driver now installed so set up the read/write functions to use driver also.
-    uart_vfs_dev_use_driver(0);
+    uart_vfs_dev_use_driver(uart_num_);
+
+    rx_buf_ = new char[rx_buf_size_];
 }
 
 Serial::~Serial()
 {
     if (uart_fd_ > 0) {
+        MY_SELECT.DeleteFd(uart_fd_);
         close(uart_fd_);
     }
+    delete[] rx_buf_;
+}
+
+void Serial::AsyncRecv()
+{
+    MY_SELECT.AddFd(uart_fd_, std::bind(&Serial::AsyncRecvData, this));
 }
 
 int Serial::SendData(const char *data, const int lenght)
@@ -65,4 +72,9 @@ int Serial::SendData(const char *data, const int lenght)
 int Serial::RecvData(char *data, const int lenght)
 {
     return uart_read_bytes(uart_num_, data, lenght, 1000 / portTICK_PERIOD_MS);
+}
+
+void Serial::AsyncRecvData()
+{
+    RecvData(rx_buf_, rx_buf_size_);
 }

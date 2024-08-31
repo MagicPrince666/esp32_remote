@@ -7,6 +7,7 @@
 // This demo UI is adapted from LVGL official example: https://docs.lvgl.io/master/widgets/extra/meter.html#simple-meter
 
 #include "lvgl.h"
+#include "lvgl_demo_ui.h"
 
 static lv_obj_t *meter;
 static lv_obj_t * btn;

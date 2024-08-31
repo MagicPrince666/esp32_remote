@@ -9,14 +9,17 @@
 #ifndef __ROCKER_H__
 #define __ROCKER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "esp_adc/adc_continuous.h"
+class Rocker
+{
+public:
+    Rocker();
+    ~Rocker();
 
-void adc_read_task(void *param);
+private:
+    adc_continuous_handle_t handle_;
 
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
+    static void adc_read_task(void *param);
+};
 
 #endif

@@ -21,6 +21,8 @@ public:
 
     void AddFd(int fd, std::function<void()> handler);
 
+    void DeleteFd(int fd);
+
 private:
     bool loop_quit_;
     // 回调列表
