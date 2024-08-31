@@ -1,7 +1,14 @@
 #include "touch.h"
 #include "math.h"
+#include "lvgl.h"
 #include "stdlib.h"
 #include <unistd.h>
+
+#define PIN_NUM_TCS   22		// Touch screen CS pin
+#define PIN_NUM_TIRQ   33		// Touch screen IRQ pin
+
+//电阻屏芯片连接引脚	   
+#define PEN  		gpio_get_level(PIN_NUM_TIRQ)  	//PF10 INT
 
 _m_tp_dev tp_dev =
     {
@@ -20,6 +27,9 @@ _m_tp_dev tp_dev =
 // 默认为touchtype=0的数据.
 uint8_t CMD_RDX = 0XD0;
 uint8_t CMD_RDY = 0X90;
+
+uint16_t POINT_COLOR = 0xFFFF;
+uint16_t BACK_COLOR = 0xFFFF;
 
 spi_device_handle_t tp_spi;
 
@@ -138,13 +148,13 @@ uint8_t TP_Read_XY2(uint16_t *x, uint16_t *y)
 void TP_Drow_Touch_Point(uint16_t x, uint16_t y, uint16_t color)
 {
     POINT_COLOR = color;
-    LCD_DrawLine(x - 12, y, x + 13, y); // 横线
-    LCD_DrawLine(x, y - 12, x, y + 13); // 竖线
-    LCD_DrawPoint(x + 1, y + 1);
-    LCD_DrawPoint(x - 1, y + 1);
-    LCD_DrawPoint(x + 1, y - 1);
-    LCD_DrawPoint(x - 1, y - 1);
-    LCD_Draw_Circle(x, y, 6); // 画中心圈
+    // LCD_DrawLine(x - 12, y, x + 13, y); // 横线
+    // LCD_DrawLine(x, y - 12, x, y + 13); // 竖线
+    // LCD_DrawPoint(x + 1, y + 1);
+    // LCD_DrawPoint(x - 1, y + 1);
+    // LCD_DrawPoint(x + 1, y - 1);
+    // LCD_DrawPoint(x - 1, y - 1);
+    // LCD_Draw_Circle(x, y, 6); // 画中心圈
 }
 // 画一个大点(2*2的点)
 // x,y:坐标
@@ -152,10 +162,10 @@ void TP_Drow_Touch_Point(uint16_t x, uint16_t y, uint16_t color)
 void TP_Draw_Big_Point(uint16_t x, uint16_t y, uint16_t color)
 {
     POINT_COLOR = color;
-    LCD_DrawPoint(x, y); // 中心点
-    LCD_DrawPoint(x + 1, y);
-    LCD_DrawPoint(x, y + 1);
-    LCD_DrawPoint(x + 1, y + 1);
+    // LCD_DrawPoint(x, y); // 中心点
+    // LCD_DrawPoint(x + 1, y);
+    // LCD_DrawPoint(x, y + 1);
+    // LCD_DrawPoint(x + 1, y + 1);
 }
 //////////////////////////////////////////////////////////////////////////////////
 // 触摸按键扫描
@@ -176,13 +186,13 @@ uint8_t TP_Scan(uint8_t tp)
             tp_dev.x[4] = tp_dev.x[0];
             tp_dev.y[4] = tp_dev.y[0];
         }
-        if (lcddev.dir) { // 横屏
-            // tp_dev.sta |= 0x01;
-            uint16_t temp;
-            temp        = tp_dev.y[0];
-            tp_dev.y[0] = tp_dev.x[0];
-            tp_dev.x[0] = lcddev.width - temp;
-        }
+        // if (lcddev.dir) { // 横屏
+        //     // tp_dev.sta |= 0x01;
+        //     uint16_t temp;
+        //     temp        = tp_dev.y[0];
+        //     tp_dev.y[0] = tp_dev.x[0];
+        //     tp_dev.x[0] = lcddev.width - temp;
+        // }
     } else {
         if (tp_dev.sta & TP_PRES_DOWN) {
             tp_dev.sta &= ~(1 << 7);
@@ -321,24 +331,24 @@ uint8_t *const TP_REMIND_MSG_TBL = (uint8_t *)"Please use the stylus click the c
 void TP_Adj_Info_Show(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, uint16_t fac)
 {
     POINT_COLOR = RED;
-    LCD_ShowString(40, 160, lcddev.width, lcddev.height, 16, (char *)"x1:");
-    LCD_ShowString(40 + 80, 160, lcddev.width, lcddev.height, 16, (char *)"y1:");
-    LCD_ShowString(40, 180, lcddev.width, lcddev.height, 16, (char *)"x2:");
-    LCD_ShowString(40 + 80, 180, lcddev.width, lcddev.height, 16, (char *)"y2:");
-    LCD_ShowString(40, 200, lcddev.width, lcddev.height, 16, (char *)"x3:");
-    LCD_ShowString(40 + 80, 200, lcddev.width, lcddev.height, 16, (char *)"y3:");
-    LCD_ShowString(40, 220, lcddev.width, lcddev.height, 16, (char *)"x4:");
-    LCD_ShowString(40 + 80, 220, lcddev.width, lcddev.height, 16, (char *)"y4:");
-    LCD_ShowString(40, 240, lcddev.width, lcddev.height, 16, (char *)"fac is:");
-    LCD_ShowNum(40 + 24, 160, x0, 4, 16);      // 显示数值
-    LCD_ShowNum(40 + 24 + 80, 160, y0, 4, 16); // 显示数值
-    LCD_ShowNum(40 + 24, 180, x1, 4, 16);      // 显示数值
-    LCD_ShowNum(40 + 24 + 80, 180, y1, 4, 16); // 显示数值
-    LCD_ShowNum(40 + 24, 200, x2, 4, 16);      // 显示数值
-    LCD_ShowNum(40 + 24 + 80, 200, y2, 4, 16); // 显示数值
-    LCD_ShowNum(40 + 24, 220, x3, 4, 16);      // 显示数值
-    LCD_ShowNum(40 + 24 + 80, 220, y3, 4, 16); // 显示数值
-    LCD_ShowNum(40 + 56, 240, fac, 3, 16);     // 显示数值,该数值必须在95~105范围之内.
+    // LCD_ShowString(40, 160, lcddev.width, lcddev.height, 16, (char *)"x1:");
+    // LCD_ShowString(40 + 80, 160, lcddev.width, lcddev.height, 16, (char *)"y1:");
+    // LCD_ShowString(40, 180, lcddev.width, lcddev.height, 16, (char *)"x2:");
+    // LCD_ShowString(40 + 80, 180, lcddev.width, lcddev.height, 16, (char *)"y2:");
+    // LCD_ShowString(40, 200, lcddev.width, lcddev.height, 16, (char *)"x3:");
+    // LCD_ShowString(40 + 80, 200, lcddev.width, lcddev.height, 16, (char *)"y3:");
+    // LCD_ShowString(40, 220, lcddev.width, lcddev.height, 16, (char *)"x4:");
+    // LCD_ShowString(40 + 80, 220, lcddev.width, lcddev.height, 16, (char *)"y4:");
+    // LCD_ShowString(40, 240, lcddev.width, lcddev.height, 16, (char *)"fac is:");
+    // LCD_ShowNum(40 + 24, 160, x0, 4, 16);      // 显示数值
+    // LCD_ShowNum(40 + 24 + 80, 160, y0, 4, 16); // 显示数值
+    // LCD_ShowNum(40 + 24, 180, x1, 4, 16);      // 显示数值
+    // LCD_ShowNum(40 + 24 + 80, 180, y1, 4, 16); // 显示数值
+    // LCD_ShowNum(40 + 24, 200, x2, 4, 16);      // 显示数值
+    // LCD_ShowNum(40 + 24 + 80, 200, y2, 4, 16); // 显示数值
+    // LCD_ShowNum(40 + 24, 220, x3, 4, 16);      // 显示数值
+    // LCD_ShowNum(40 + 24 + 80, 220, y3, 4, 16); // 显示数值
+    // LCD_ShowNum(40 + 56, 240, fac, 3, 16);     // 显示数值,该数值必须在95~105范围之内.
 }
 int run = 1;
 // 触摸屏校准代码
@@ -352,13 +362,13 @@ void TP_Adjust(void)
     double fac;
     uint16_t outtime = 0;
     cnt              = 0;
-    POINT_COLOR      = BLUE;
-    BACK_COLOR       = WHITE;
-    LCD_Clear(WHITE);  // 清屏
-    POINT_COLOR = RED; // 红色
-    LCD_Clear(WHITE);  // 清屏
-    POINT_COLOR = BLACK;
-    LCD_ShowString(40, 40, 160, 100, 16, (char *)TP_REMIND_MSG_TBL); // 显示提示信息
+    // POINT_COLOR      = BLUE;
+    // BACK_COLOR       = WHITE;
+    // LCD_Clear(WHITE);  // 清屏
+    // POINT_COLOR = RED; // 红色
+    // LCD_Clear(WHITE);  // 清屏
+    // POINT_COLOR = BLACK;
+    // LCD_ShowString(40, 40, 160, 100, 16, (char *)TP_REMIND_MSG_TBL); // 显示提示信息
     TP_Drow_Touch_Point(20, 20, RED);                                // 画点1
     tp_dev.sta  = 0;                                                 // 消除触发信号
     tp_dev.xfac = 0;                                                 // xfac用来标记是否校准过,所以校准之前必须清掉!以免错误
@@ -458,7 +468,7 @@ void TP_Adjust(void)
                     cnt = 0;
                     TP_Drow_Touch_Point(lcddev.width - 20, lcddev.height - 20, WHITE); // 清除点4
                     TP_Drow_Touch_Point(20, 20, RED);                                  // 画点1
-                    LCD_ShowString(40, 26, lcddev.width, lcddev.height, 16, (char *)"TP Need readjust!");
+                    // LCD_ShowString(40, 26, lcddev.width, lcddev.height, 16, (char *)"TP Need readjust!");
                     tp_dev.touchtype = !tp_dev.touchtype; // 修改触屏类型.
                     if (tp_dev.touchtype)                 // X,Y方向与屏幕相反
                     {
@@ -471,11 +481,11 @@ void TP_Adjust(void)
                     continue;
                 }
                 POINT_COLOR = BLUE;
-                LCD_Clear(WHITE);                                                                            // 清屏
-                LCD_ShowString(35, 110, lcddev.width, lcddev.height, 16, (char *)"Touch Screen Adjust OK!"); // 校正完成
+                // LCD_Clear(WHITE);                                                                            // 清屏
+                // LCD_ShowString(35, 110, lcddev.width, lcddev.height, 16, (char *)"Touch Screen Adjust OK!"); // 校正完成
                 usleep(1000 * 1000);
                 TP_Save_Adjdata();
-                LCD_Clear(WHITE); // 清屏
+                // LCD_Clear(WHITE); // 清屏
                 return;           // 校正完成
             }
         }
@@ -494,7 +504,7 @@ uint8_t TP_Init(void)
 {
     esp_err_t ret;
 
-    // gpio_set_direction(PIN_NUM_TCS, GPIO_MODE_OUTPUT);
+    // Initialize GPIOs
     gpio_set_direction(PIN_NUM_TIRQ, GPIO_MODE_INPUT);
     gpio_set_level(PIN_NUM_TIRQ, 1);
 
@@ -512,7 +522,7 @@ uint8_t TP_Init(void)
     if (TP_Get_Adjdata()) {
         return 0;         // 已经校准
     } else {              // 未校准?
-        LCD_Clear(WHITE); // 清屏
+        // LCD_Clear(WHITE); // 清屏
         TP_Adjust();      // 屏幕校准
     }
     TP_Get_Adjdata();
