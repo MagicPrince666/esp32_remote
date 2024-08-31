@@ -16,8 +16,13 @@ public:
     Rocker();
     ~Rocker();
 
+    uint32_t *GetAdcData() {
+        return adc_raw_;
+    }
+
 private:
     adc_continuous_handle_t handle_;
+    uint32_t adc_raw_[8];
 
     static void adc_read_task(void *param);
 };

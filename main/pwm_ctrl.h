@@ -1,14 +1,19 @@
 #ifndef __PWM_CTRL_H__
 #define __PWM_CTRL_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "driver/mcpwm_prelude.h"
+#include "driver/gpio.h"
 
-void pwm_ctrl(void *arg);
+class PwmCtrl
+{
+public:
+    PwmCtrl();
+    ~PwmCtrl();
 
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
+    void SetAngle(int angle);
+
+private:
+    mcpwm_cmpr_handle_t comparator_;
+};
 
 #endif

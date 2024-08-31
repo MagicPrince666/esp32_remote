@@ -1,6 +1,7 @@
 #include "peripherals.h"
 #include "serial.h"
 #include "rocker.h"
+#include "pwm_ctrl.h"
 
 Serial *g_serial = nullptr;
 #define TXD1_PIN 18
