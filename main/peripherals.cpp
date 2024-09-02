@@ -2,6 +2,7 @@
 #include "serial.h"
 #include "rocker.h"
 #include "pwm_ctrl.h"
+#include "softap_sta.h"
 
 Serial *g_serial = nullptr;
 #define TXD1_PIN 18
@@ -9,6 +10,8 @@ Serial *g_serial = nullptr;
 
 Rocker *g_rocker = nullptr;
 PwmCtrl *g_pwm = nullptr;
+SoftApSta *g_wifi = nullptr;
+
 lv_disp_t *g_disp = nullptr;
 static lv_obj_t * title;
 static lv_obj_t * adc_chanals[5];
@@ -37,6 +40,9 @@ void InitAll(lv_disp_t *disp)
     g_rocker = new Rocker();
     // g_pwm = new PwmCtrl();
     g_rocker->SetCallback(std::bind(&ShowAdcData, std::placeholders::_1, std::placeholders::_2));
+    // g_wifi = new SoftApSta(); 
+    // g_wifi->Init();
+    // g_wifi->SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
 }
 
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
