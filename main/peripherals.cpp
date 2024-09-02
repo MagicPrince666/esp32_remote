@@ -12,6 +12,8 @@ Rocker *g_rocker = nullptr;
 PwmCtrl *g_pwm = nullptr;
 SoftApSta *g_wifi = nullptr;
 
+SemaphoreHandle_t g_lvgl_mux = nullptr;
+
 lv_disp_t *g_disp = nullptr;
 static lv_obj_t * title;
 static lv_obj_t * adc_chanals[5];
@@ -45,12 +47,28 @@ void InitAll(lv_disp_t *disp)
     // g_wifi->SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
 }
 
+bool wait_lvgl_lock(int timeout_ms)
+{
+    // Convert timeout in milliseconds to FreeRTOS ticks
+    // If `timeout_ms` is set to -1, the program will block until the condition is met
+    const TickType_t timeout_ticks = (timeout_ms == -1) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
+    return xSemaphoreTakeRecursive(g_lvgl_mux, timeout_ticks) == pdTRUE;
+}
+
+void SetupLock(SemaphoreHandle_t lvgl_mux)
+{
+    g_lvgl_mux = lvgl_mux;
+}
+
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 {
     char str[32];
-    for (uint32_t i = 0; i < channal; i++) {
-        int32_t lenght = snprintf(str, 128, "%ld", adcs[i]);
-        str[lenght] = 0;
-        lv_label_set_text(adc_chanals[i], str);
+    if (wait_lvgl_lock(-1)) {
+        for (uint32_t i = 0; i < channal; i++) {
+            int32_t lenght = snprintf(str, 128, "%ld", adcs[i]);
+            str[lenght] = 0;
+            lv_label_set_text(adc_chanals[i], str);
+        }
+        xSemaphoreGiveRecursive(g_lvgl_mux);
     }
 }
