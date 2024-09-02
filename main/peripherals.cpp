@@ -41,7 +41,7 @@ void InitAll(lv_disp_t *disp)
 
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 {
-    char str[128];
+    char str[32];
     for (uint32_t i = 0; i < channal; i++) {
         int32_t lenght = snprintf(str, 128, "%ld", adcs[i]);
         str[lenght] = 0;
