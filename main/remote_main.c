@@ -68,7 +68,7 @@ static const char *TAG = "example";
 #define EXAMPLE_LVGL_TICK_PERIOD_MS    2
 #define EXAMPLE_LVGL_TASK_MAX_DELAY_MS 500
 #define EXAMPLE_LVGL_TASK_MIN_DELAY_MS 1
-#define EXAMPLE_LVGL_TASK_STACK_SIZE   (4 * 1024)
+#define EXAMPLE_LVGL_TASK_STACK_SIZE   (5 * 1024)
 #define EXAMPLE_LVGL_TASK_PRIORITY     2
 
 static SemaphoreHandle_t lvgl_mux = NULL;
@@ -107,7 +107,7 @@ static void example_lvgl_port_update_callback(lv_disp_drv_t *drv)
         esp_lcd_panel_mirror(panel_handle, true, false);
 #if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
         // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, false);
+        esp_lcd_touch_set_mirror_y(tp, true);
         esp_lcd_touch_set_mirror_x(tp, false);
 #endif
         break;
@@ -117,7 +117,7 @@ static void example_lvgl_port_update_callback(lv_disp_drv_t *drv)
         esp_lcd_panel_mirror(panel_handle, true, true);
 #if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
         // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, false);
+        esp_lcd_touch_set_mirror_y(tp, true);
         esp_lcd_touch_set_mirror_x(tp, false);
 #endif
         break;
@@ -127,7 +127,7 @@ static void example_lvgl_port_update_callback(lv_disp_drv_t *drv)
         esp_lcd_panel_mirror(panel_handle, false, true);
 #if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
         // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, false);
+        esp_lcd_touch_set_mirror_y(tp, true);
         esp_lcd_touch_set_mirror_x(tp, false);
 #endif
         break;
@@ -137,7 +137,7 @@ static void example_lvgl_port_update_callback(lv_disp_drv_t *drv)
         esp_lcd_panel_mirror(panel_handle, false, false);
 #if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
         // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, false);
+        esp_lcd_touch_set_mirror_y(tp, true);
         esp_lcd_touch_set_mirror_x(tp, false);
 #endif
         break;
@@ -297,7 +297,7 @@ void app_main(void)
         .x_max = EXAMPLE_LCD_H_RES,
         .y_max = EXAMPLE_LCD_V_RES,
         .rst_gpio_num = -1,
-        .int_gpio_num = -1,
+        .int_gpio_num = EXAMPLE_PIN_NUM_TOUCH_INT,
         .flags = {
             .swap_xy = 0,
             .mirror_x = 0,
@@ -318,7 +318,7 @@ void app_main(void)
         .flags = {
             .swap_xy = 0,
             .mirror_x = 0,
-            .mirror_y = 0,
+            .mirror_y = 1,
         },
     };
 #endif
