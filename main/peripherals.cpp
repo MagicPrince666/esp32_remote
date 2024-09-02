@@ -14,5 +14,5 @@ void InitAll()
 {
     g_serial = new Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN);
     g_rocker = new Rocker();
-    g_pwm = new PwmCtrl();
+    // g_pwm = new PwmCtrl();
 }
