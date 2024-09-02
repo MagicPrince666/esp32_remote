@@ -9,5 +9,4 @@ idf_component_register(SRCS
     select.cpp
     peripherals.cpp
     softap_sta.cpp
-#    touch.cpp
     INCLUDE_DIRS ".")
