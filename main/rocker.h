@@ -10,6 +10,7 @@
 #define __ROCKER_H__
 
 #include "esp_adc/adc_continuous.h"
+#include <functional>
 class Rocker
 {
 public:
@@ -20,9 +21,14 @@ public:
         return adc_raw_;
     }
 
+    void SetCallback(std::function<void(const uint32_t *, const uint32_t)> handler) {
+        reflash_function_ = handler;
+    }
+
 private:
     adc_continuous_handle_t handle_;
     uint32_t adc_raw_[8];
+    std::function<void(const uint32_t*, const uint32_t)> reflash_function_; // 接收回调
 
     static void adc_read_task(void *param);
 };

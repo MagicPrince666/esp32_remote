@@ -138,18 +138,22 @@ void Rocker::adc_read_task(void *param)
                         ESP_LOGW(TAG, "Invalid data [%s_%" PRIu32 "_%" PRIx32 "]", unit, chan_num, data);
                     }
                 }
-                ESP_LOGI(TAG, "lx = %"PRIx32"\tly = %"PRIx32"\trx = %"PRIx32"\try = %"PRIx32"\tpwoer = %"PRIx32, 
-                    rocker->adc_raw_[0],
-                    rocker->adc_raw_[1],
-                    rocker->adc_raw_[2],
-                    rocker->adc_raw_[3],
-                    rocker->adc_raw_[4]);
+                if (rocker->reflash_function_) {
+                    rocker->reflash_function_(rocker->adc_raw_, 5);
+                } else {
+                    ESP_LOGI(TAG, "lx = %"PRIx32"\tly = %"PRIx32"\trx = %"PRIx32"\try = %"PRIx32"\tpwoer = %"PRIx32, 
+                        rocker->adc_raw_[0],
+                        rocker->adc_raw_[1],
+                        rocker->adc_raw_[2],
+                        rocker->adc_raw_[3],
+                        rocker->adc_raw_[4]);
+                }
                 /**
                  * Because printing is slow, so every time you call `ulTaskNotifyTake`, it will immediately return.
                  * To avoid a task watchdog timeout, add a delay here. When you replace the way you process the data,
                  * usually you don't need this delay (as this task will block for a while).
                  */
-                vTaskDelay(1);
+                vTaskDelay(10);
             } else if (ret == ESP_ERR_TIMEOUT) {
                 // We try to read `EXAMPLE_READ_LEN` until API returns timeout, which means there's no available data
                 break;

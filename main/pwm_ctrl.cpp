@@ -2,6 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "driver/mcpwm_prelude.h"
 
 static const char *TAG = "pwm";
 
@@ -24,12 +25,13 @@ PwmCtrl::PwmCtrl() {
     ESP_LOGI(TAG, "Create timer and operator");
     comparator_ = nullptr;
     mcpwm_timer_handle_t timer = NULL;
-    mcpwm_timer_config_t timer_config;
-    timer_config.group_id = 0;
-    timer_config.clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT;
-    timer_config.resolution_hz = SERVO_TIMEBASE_RESOLUTION_HZ;
-    timer_config.period_ticks = SERVO_TIMEBASE_PERIOD;
-    timer_config.count_mode = MCPWM_TIMER_COUNT_MODE_UP;
+    mcpwm_timer_config_t timer_config = {
+        .group_id = 0,
+        .clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT,
+        .resolution_hz = SERVO_TIMEBASE_RESOLUTION_HZ,
+        .count_mode = MCPWM_TIMER_COUNT_MODE_UP,
+        .period_ticks = SERVO_TIMEBASE_PERIOD,
+    };
     ESP_ERROR_CHECK(mcpwm_new_timer(&timer_config, &timer));
 
     mcpwm_oper_handle_t oper = NULL;
