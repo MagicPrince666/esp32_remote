@@ -105,41 +105,21 @@ static void example_lvgl_port_update_callback(lv_disp_drv_t *drv)
         // Rotate LCD display
         esp_lcd_panel_swap_xy(panel_handle, false);
         esp_lcd_panel_mirror(panel_handle, true, false);
-#if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
-        // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, true);
-        esp_lcd_touch_set_mirror_x(tp, false);
-#endif
         break;
     case LV_DISP_ROT_90:
         // Rotate LCD display
         esp_lcd_panel_swap_xy(panel_handle, true);
         esp_lcd_panel_mirror(panel_handle, true, true);
-#if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
-        // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, true);
-        esp_lcd_touch_set_mirror_x(tp, false);
-#endif
         break;
     case LV_DISP_ROT_180:
         // Rotate LCD display
         esp_lcd_panel_swap_xy(panel_handle, false);
         esp_lcd_panel_mirror(panel_handle, false, true);
-#if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
-        // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, true);
-        esp_lcd_touch_set_mirror_x(tp, false);
-#endif
         break;
     case LV_DISP_ROT_270:
         // Rotate LCD display
         esp_lcd_panel_swap_xy(panel_handle, true);
         esp_lcd_panel_mirror(panel_handle, false, false);
-#if CONFIG_EXAMPLE_LCD_TOUCH_ENABLED
-        // Rotate LCD touch
-        esp_lcd_touch_set_mirror_y(tp, true);
-        esp_lcd_touch_set_mirror_x(tp, false);
-#endif
         break;
     }
 }
@@ -218,7 +198,7 @@ void app_main(void)
     ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
 
     ESP_LOGI(TAG, "Initialize SPI bus");
-     spi_bus_config_t buscfg = {
+    spi_bus_config_t buscfg = {
         .sclk_io_num = EXAMPLE_PIN_NUM_SCLK,
         .mosi_io_num = EXAMPLE_PIN_NUM_MOSI,
         .miso_io_num = EXAMPLE_PIN_NUM_MISO,
@@ -226,13 +206,6 @@ void app_main(void)
         .quadhd_io_num = -1,
         .max_transfer_sz = EXAMPLE_LCD_H_RES * 80 * sizeof(uint16_t),
     };
-    // spi_bus_config_t buscfg;
-    // buscfg.sclk_io_num = EXAMPLE_PIN_NUM_SCLK;
-    // buscfg.mosi_io_num = EXAMPLE_PIN_NUM_MOSI;
-    // buscfg.miso_io_num = EXAMPLE_PIN_NUM_MISO;
-    // buscfg.quadwp_io_num = -1;
-    // buscfg.quadhd_io_num = -1;
-    // buscfg.max_transfer_sz = EXAMPLE_LCD_H_RES * 80 * sizeof(uint16_t);
 
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
@@ -249,16 +222,6 @@ void app_main(void)
         .on_color_trans_done = example_notify_lvgl_flush_ready,
         .user_ctx = &disp_drv,
     };
-    // esp_lcd_panel_io_spi_config_t io_config;
-    // io_config.dc_gpio_num = EXAMPLE_PIN_NUM_LCD_DC;
-    // io_config.cs_gpio_num = EXAMPLE_PIN_NUM_LCD_CS;
-    // io_config.pclk_hz = EXAMPLE_LCD_PIXEL_CLOCK_HZ;
-    // io_config.lcd_cmd_bits = EXAMPLE_LCD_CMD_BITS;
-    // io_config.lcd_param_bits = EXAMPLE_LCD_PARAM_BITS;
-    // io_config.spi_mode = 0;
-    // io_config.trans_queue_depth = 10;
-    // io_config.on_color_trans_done = example_notify_lvgl_flush_ready;
-    // io_config.user_ctx = &disp_drv;
     // Attach the LCD to the SPI bus
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST, &io_config, &io_handle));
 
