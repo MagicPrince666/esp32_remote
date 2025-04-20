@@ -9,4 +9,5 @@ idf_component_register(SRCS
     select.cpp
     peripherals.cpp
     softap_sta.cpp
+    ws2812.cpp
     INCLUDE_DIRS ".")
