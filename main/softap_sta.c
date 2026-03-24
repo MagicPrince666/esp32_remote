@@ -62,15 +62,20 @@
 static const char *TAG_AP = "WiFi SoftAP";
 static const char *TAG_STA = "WiFi Sta";
 
-SoftApSta::SoftApSta() {
-    s_retry_num = 0;
-}
+static EventGroupHandle_t s_wifi_event_group;
+static int s_retry_num;
+static void softap_set_dns_addr(esp_netif_t *esp_netif_ap,esp_netif_t *esp_netif_sta);
+static esp_netif_t *wifi_init_sta(void);
+static esp_netif_t *wifi_init_softap(void);
+    
+static void wifi_event_handler(void *arg, esp_event_base_t event_base,
+                               int32_t event_id, void *event_data);
 
-SoftApSta::~SoftApSta() {}
 
-void SoftApSta::Init() {
+void SoftApStaInit() {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+    s_retry_num = 0;
 
     //Initialize NVS
     esp_err_t ret = nvs_flash_init();
@@ -86,13 +91,13 @@ void SoftApSta::Init() {
     /* Register Event handler */
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
                     ESP_EVENT_ANY_ID,
-                    &SoftApSta::wifi_event_handler,
-                    this,
+                    &wifi_event_handler,
+                    NULL,
                     NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
                     IP_EVENT_STA_GOT_IP,
-                    &SoftApSta::wifi_event_handler,
-                    this,
+                    &wifi_event_handler,
+                    NULL,
                     NULL));
 
     /*Initialize WiFi */
@@ -100,7 +105,7 @@ void SoftApSta::Init() {
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 }
 
-void SoftApSta::SetUpSta(std::string ssid, std::string passwd)
+void SetUpSta(const char* ssid, const char* passwd)
 {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
@@ -139,7 +144,7 @@ void SoftApSta::SetUpSta(std::string ssid, std::string passwd)
     esp_netif_set_default_netif(esp_netif_sta);
 }
 
-void SoftApSta::SetUpAp(std::string ssid, std::string passwd)
+void SetUpAp(const char* ssid, const char* passwd)
 {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 
@@ -156,10 +161,9 @@ void SoftApSta::SetUpAp(std::string ssid, std::string passwd)
     }
 }
 
-void SoftApSta::wifi_event_handler(void *arg, esp_event_base_t event_base,
+void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
 {
-    SoftApSta *p_this = (SoftApSta *)arg;
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *) event_data;
         ESP_LOGI(TAG_AP, "Station "MACSTR" joined, AID=%d",
@@ -174,13 +178,13 @@ void SoftApSta::wifi_event_handler(void *arg, esp_event_base_t event_base,
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
         ESP_LOGI(TAG_STA, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
-        p_this->s_retry_num = 0;
-        xEventGroupSetBits(p_this->s_wifi_event_group, WIFI_CONNECTED_BIT);
+        s_retry_num = 0;
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
 /* Initialize soft AP */
-esp_netif_t *SoftApSta::wifi_init_softap(void)
+esp_netif_t *wifi_init_softap(void)
 {
     esp_netif_t *esp_netif_ap = esp_netif_create_default_wifi_ap();
 
@@ -211,7 +215,7 @@ esp_netif_t *SoftApSta::wifi_init_softap(void)
 }
 
 /* Initialize wifi station */
-esp_netif_t *SoftApSta::wifi_init_sta(void)
+esp_netif_t *wifi_init_sta(void)
 {
     esp_netif_t *esp_netif_sta = esp_netif_create_default_wifi_sta();
 
@@ -240,7 +244,7 @@ esp_netif_t *SoftApSta::wifi_init_sta(void)
     return esp_netif_sta;
 }
 
-void SoftApSta::softap_set_dns_addr(esp_netif_t *esp_netif_ap,esp_netif_t *esp_netif_sta)
+void softap_set_dns_addr(esp_netif_t *esp_netif_ap,esp_netif_t *esp_netif_sta)
 {
     esp_netif_dns_info_t dns;
     esp_netif_get_dns_info(esp_netif_sta,ESP_NETIF_DNS_MAIN,&dns);

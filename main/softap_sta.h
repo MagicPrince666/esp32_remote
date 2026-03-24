@@ -1,7 +1,6 @@
 #ifndef __SOFTAP_STA_H__
 #define __SOFTAP_STA_H__
 
-#include <string>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -22,27 +21,10 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-class SoftApSta {
-public:
-    SoftApSta();
-    ~SoftApSta();
+void SoftApStaInit();
 
-    void Init();
+void SetUpSta(const char* ssid, const char* passwd);
 
-    void SetUpSta(std::string ssid, std::string passwd);
-
-    void SetUpAp(std::string ssid, std::string passwd);
-
-private:
-    /* FreeRTOS event group to signal when we are connected/disconnected */
-    EventGroupHandle_t s_wifi_event_group;
-    int s_retry_num;
-    void softap_set_dns_addr(esp_netif_t *esp_netif_ap,esp_netif_t *esp_netif_sta);
-    esp_netif_t *wifi_init_sta(void);
-    esp_netif_t *wifi_init_softap(void);
-    
-    static void wifi_event_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data);
-};
+void SetUpAp(const char* ssid, const char* passwd);
 
 #endif

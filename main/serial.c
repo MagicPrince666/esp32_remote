@@ -4,7 +4,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include <cstring>
+#include <string.h>
 #include <stdio.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -13,14 +13,25 @@
 #include "select.h"
 
 static const char *TAG = "uart_select";
+int rx_buf_size_;
+char *rx_buf_;
+uart_port_t uart_num_;
+int uart_fd_;
+int tx_io_num_;
+int rx_io_num_;
+int rts_io_num_;
+int cts_io_num_;
 
-Serial::Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_num, int cts_io_num)
-    : uart_num_(uart_num),
-      tx_io_num_(tx_io_num),
-      rx_io_num_(rx_io_num),
-      rts_io_num_(rts_io_num),
-      cts_io_num_(cts_io_num)
+static void AsyncRecvData();
+
+void Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_num, int cts_io_num)
 {
+    uart_num_ = uart_num;
+    tx_io_num_ = tx_io_num;
+    rx_io_num_ = rx_io_num;
+    rts_io_num_ = rts_io_num;
+    cts_io_num_ = cts_io_num;
+
     rx_buf_size_ = 1024;
     uart_set_pin(uart_num_, tx_io_num, rx_io_num, rts_io_num, cts_io_num);
     if (uart_driver_install(uart_num_, 2 * 1024, 0, 0, NULL, 0) != ESP_OK) {
@@ -47,34 +58,34 @@ Serial::Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_nu
     // We have a driver now installed so set up the read/write functions to use driver also.
     uart_vfs_dev_use_driver(uart_num_);
 
-    rx_buf_ = new char[rx_buf_size_];
+    rx_buf_ = malloc(rx_buf_size_);
 }
 
-Serial::~Serial()
+void SerialRealease()
 {
     if (uart_fd_ > 0) {
-        MY_SELECT.DeleteFd(uart_fd_);
+        DeleteFd(uart_fd_);
         close(uart_fd_);
     }
-    delete[] rx_buf_;
+    free(rx_buf_);
 }
 
-void Serial::AsyncRecv()
+void AsyncRecv()
 {
-    MY_SELECT.AddFd(uart_fd_, std::bind(&Serial::AsyncRecvData, this));
+    AddFd(uart_fd_, AsyncRecvData);
 }
 
-int Serial::SendData(const char *data, const int lenght)
+int SendData(const char *data, const int lenght)
 {
     return uart_write_bytes(uart_num_, data, lenght);
 }
 
-int Serial::RecvData(char *data, const int lenght)
+int RecvData(char *data, const int lenght)
 {
     return uart_read_bytes(uart_num_, data, lenght, 1000 / portTICK_PERIOD_MS);
 }
 
-void Serial::AsyncRecvData()
+void AsyncRecvData()
 {
     RecvData(rx_buf_, rx_buf_size_);
 }

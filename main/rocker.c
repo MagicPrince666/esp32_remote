@@ -1,4 +1,4 @@
-#include <cstring>
+#include <string.h>
 #include "rocker.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -25,8 +25,13 @@
 #define EXAMPLE_READ_LEN 256
 static TaskHandle_t s_task_handle;
 static const char *TAG = "rocker";
+static adc_continuous_handle_t handle_;
+static uint32_t adc_raw_[8];
+rocker_callback_t reflash_function_; // 接收回调
 
 static adc_channel_t channel[5] = {ADC_CHANNEL_0, ADC_CHANNEL_3, ADC_CHANNEL_4, ADC_CHANNEL_6, ADC_CHANNEL_7};
+
+static void adc_read_task(void *param);
 
 static bool IRAM_ATTR s_conv_done_cb(adc_continuous_handle_t handle, const adc_continuous_evt_data_t *edata, void *user_data)
 {
@@ -71,9 +76,8 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
     *out_handle = handle;
 }
 
-void Rocker::adc_read_task(void *param)
+void adc_read_task(void *param)
 {
-    Rocker *rocker = (Rocker *)param;
     adc_continuous_handle_t handle = NULL;
     esp_err_t ret;
     uint32_t ret_num                 = 0;
@@ -114,39 +118,39 @@ void Rocker::adc_read_task(void *param)
                     if (chan_num < SOC_ADC_CHANNEL_NUM(EXAMPLE_ADC_UNIT)) {
                         // ESP_LOGI(TAG, "Unit: %s, Channel: %" PRIu32 ", Value: %" PRIx32, unit, chan_num, data);
                         if (chan_num == 0) {
-                            if (rocker->adc_raw_[3] != data) {
-                                rocker->adc_raw_[3] = data;
+                            if (adc_raw_[3] != data) {
+                                adc_raw_[3] = data;
                             }
                         } else if (chan_num == 3) {
-                            if (rocker->adc_raw_[2] != data) {
-                                rocker->adc_raw_[2] = data;
+                            if (adc_raw_[2] != data) {
+                                adc_raw_[2] = data;
                             }
                         } else if (chan_num == 4) {
-                            if (rocker->adc_raw_[4] != data) {
-                                rocker->adc_raw_[4] = data;
+                            if (adc_raw_[4] != data) {
+                                adc_raw_[4] = data;
                             }
                         } else if (chan_num == 6) {
-                            if (rocker->adc_raw_[0] != data) {
-                                rocker->adc_raw_[0] = data;
+                            if (adc_raw_[0] != data) {
+                                adc_raw_[0] = data;
                             }
                         }  else if (chan_num == 7) {
-                            if (rocker->adc_raw_[1] != data) {
-                                rocker->adc_raw_[1] = data;
+                            if (adc_raw_[1] != data) {
+                                adc_raw_[1] = data;
                             }
                         }
                     } else {
                         ESP_LOGW(TAG, "Invalid data [%s_%" PRIu32 "_%" PRIx32 "]", unit, chan_num, data);
                     }
                 }
-                if (rocker->reflash_function_) {
-                    rocker->reflash_function_(rocker->adc_raw_, 5);
+                if (reflash_function_) {
+                    reflash_function_(adc_raw_, 5);
                 } else {
                     ESP_LOGI(TAG, "lx = %"PRIx32"\tly = %"PRIx32"\trx = %"PRIx32"\try = %"PRIx32"\tpwoer = %"PRIx32, 
-                        rocker->adc_raw_[0],
-                        rocker->adc_raw_[1],
-                        rocker->adc_raw_[2],
-                        rocker->adc_raw_[3],
-                        rocker->adc_raw_[4]);
+                        adc_raw_[0],
+                        adc_raw_[1],
+                        adc_raw_[2],
+                        adc_raw_[3],
+                        adc_raw_[4]);
                 }
                 /**
                  * Because printing is slow, so every time you call `ulTaskNotifyTake`, it will immediately return.
@@ -165,10 +169,12 @@ void Rocker::adc_read_task(void *param)
     ESP_ERROR_CHECK(adc_continuous_deinit(handle));
 }
 
-Rocker::Rocker() {
-    handle_ = nullptr;
+void Rocker() {
+    handle_ = NULL;
     memset(adc_raw_, 0, sizeof(adc_raw_));
-    xTaskCreate(Rocker::adc_read_task, "adc_read_task", 4 * 1024, this, 5, NULL);
+    xTaskCreate(adc_read_task, "adc_read_task", 4 * 1024, NULL, 5, NULL);
 }
 
-Rocker::~Rocker() {}
+uint32_t *GetAdcData() {
+    return adc_raw_;
+}

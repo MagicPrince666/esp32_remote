@@ -98,3 +98,12 @@ I (619) example: Display LVGL Meter Widget
   * Check the backlight's turn-on level, and update it in `EXAMPLE_LCD_BK_LIGHT_ON_LEVEL`
 
 For any technical queries, please open an [issue] (https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+
+## 编译
+
+```zsh
+cd esp-idf
+source export.sh
+idf.py build
+idf.py -p PORT flash monitor
+```

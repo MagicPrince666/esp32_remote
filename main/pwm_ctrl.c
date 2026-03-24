@@ -5,6 +5,7 @@
 #include "driver/mcpwm_prelude.h"
 
 static const char *TAG = "pwm";
+static mcpwm_cmpr_handle_t comparator_;
 
 // Please consult the datasheet of your servo before changing the following parameters
 #define SERVO_MIN_PULSEWIDTH_US 500  // Minimum pulse width in microsecond
@@ -21,9 +22,9 @@ static inline uint32_t example_angle_to_compare(int angle)
     return (angle - SERVO_MIN_DEGREE) * (SERVO_MAX_PULSEWIDTH_US - SERVO_MIN_PULSEWIDTH_US) / (SERVO_MAX_DEGREE - SERVO_MIN_DEGREE) + SERVO_MIN_PULSEWIDTH_US;
 }
 
-PwmCtrl::PwmCtrl() {
+void PwmCtrl() {
     ESP_LOGI(TAG, "Create timer and operator");
-    comparator_ = nullptr;
+    comparator_ = NULL;
     mcpwm_timer_handle_t timer = NULL;
     mcpwm_timer_config_t timer_config = {
         .group_id = 0,
@@ -70,9 +71,7 @@ PwmCtrl::PwmCtrl() {
     ESP_ERROR_CHECK(mcpwm_timer_start_stop(timer, MCPWM_TIMER_START_NO_STOP));
 }
 
-PwmCtrl::~PwmCtrl() {}
-
-void PwmCtrl::SetAngle(int angle)
+void SetAngle(int angle)
 {
     mcpwm_comparator_set_compare_value(comparator_, example_angle_to_compare(angle));
 }

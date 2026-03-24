@@ -3,18 +3,14 @@
 #include "rocker.h"
 #include "pwm_ctrl.h"
 #include "softap_sta.h"
+#include "select.h"
 
-Serial *g_serial = nullptr;
 #define TXD1_PIN 18
 #define RXD1_PIN 5
 
-Rocker *g_rocker = nullptr;
-PwmCtrl *g_pwm = nullptr;
-SoftApSta *g_wifi = nullptr;
+SemaphoreHandle_t g_lvgl_mux = NULL;
 
-SemaphoreHandle_t g_lvgl_mux = nullptr;
-
-lv_disp_t *g_disp = nullptr;
+lv_disp_t *g_disp = NULL;
 static lv_obj_t * title;
 static lv_obj_t * adc_chanals[5];
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal);
@@ -37,11 +33,10 @@ void InitAll(lv_disp_t *disp)
         /* 设置标签的位置 */
         lv_obj_set_pos(adc_chanals[i], 48 * i + 4, 20);
     }
+    SelectInit();
     // lv_obj_set_size(title, 100, 20);
-    g_serial = new Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN);
-    g_rocker = new Rocker();
-    // g_pwm = new PwmCtrl();
-    g_rocker->SetCallback(std::bind(&ShowAdcData, std::placeholders::_1, std::placeholders::_2));
+    Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    // g_rocker->SetCallback(std::bind(&ShowAdcData, std::placeholders::_1, std::placeholders::_2));
     // g_wifi = new SoftApSta(); 
     // g_wifi->Init();
     // g_wifi->SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
