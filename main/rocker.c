@@ -169,7 +169,7 @@ void adc_read_task(void *param)
     ESP_ERROR_CHECK(adc_continuous_deinit(handle));
 }
 
-void Rocker() {
+void RockerInit() {
     handle_ = NULL;
     memset(adc_raw_, 0, sizeof(adc_raw_));
     xTaskCreate(adc_read_task, "adc_read_task", 4 * 1024, NULL, 5, NULL);
@@ -177,4 +177,9 @@ void Rocker() {
 
 uint32_t *GetAdcData() {
     return adc_raw_;
+}
+
+void SetRockerCallback(rocker_callback_t handler)
+{
+    reflash_function_ = handler;
 }

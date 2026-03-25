@@ -5,11 +5,27 @@
 #include <sys/errno.h>
 #include <sys/unistd.h>
 #include <sys/select.h>
-typedef void (*callback_t)(void);
+
+typedef void (*select_callback_t)(void);
+
+// 回调链表节点
+typedef struct callback_node {
+    int fd;
+    select_callback_t callback;
+    struct callback_node *next;
+} callback_node_t;
+
+// 链表头指针
+extern callback_node_t *callback_list_;
 
 void SelectInit();
-void AddFd(int fd, callback_t handler);
+int AddFd(int fd, select_callback_t handler);
 void DeleteFd(int fd);
-void Loop();
+
+// 遍历接口：返回第 index 个节点，不存在则返回 NULL
+callback_node_t *GetCallbackNode(int index);
+
+// 获取链表长度
+int GetCallbackCount();
 
 #endif

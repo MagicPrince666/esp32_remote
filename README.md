@@ -102,8 +102,9 @@ For any technical queries, please open an [issue] (https://github.com/espressif/
 ## 编译
 
 ```zsh
-cd esp-idf
-source export.sh
+source /Volumes/unix/esp-idf/export.sh
+idf.py set-target esp32
 idf.py build
 idf.py -p PORT flash monitor
+idf.py -p /dev/tty.usbmodem57340051551 flash
 ```

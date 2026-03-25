@@ -22,7 +22,7 @@ void InitAll(lv_disp_t *disp)
     /* 创建一个标签 */
     title = (lv_obj_t *)lv_label_create(scr);
     /* 设置标签的文本 */
-    lv_label_set_text_static(title, "Hello, LVGL!");
+    lv_label_set_text_static(title, "Remote Controler!");
     /* 设置标签的位置 */
     lv_obj_set_pos(title, 72, 0);
 
@@ -36,7 +36,8 @@ void InitAll(lv_disp_t *disp)
     SelectInit();
     // lv_obj_set_size(title, 100, 20);
     Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    // g_rocker->SetCallback(std::bind(&ShowAdcData, std::placeholders::_1, std::placeholders::_2));
+    RockerInit();
+    SetRockerCallback(ShowAdcData);
     // g_wifi = new SoftApSta(); 
     // g_wifi->Init();
     // g_wifi->SetUpSta("OpenWrt_R619ac_2.4G", "67123236");

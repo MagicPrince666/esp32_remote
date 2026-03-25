@@ -13,8 +13,10 @@
 
 typedef void (*rocker_callback_t)(const uint32_t*, const uint32_t);
 
-void Rocker();
+void RockerInit();
 
 uint32_t *GetAdcData();
+
+void SetRockerCallback(rocker_callback_t handler);
 
 #endif
