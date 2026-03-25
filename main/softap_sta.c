@@ -65,8 +65,8 @@ static const char *TAG_STA = "WiFi Sta";
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num;
 static void softap_set_dns_addr(esp_netif_t *esp_netif_ap,esp_netif_t *esp_netif_sta);
-static esp_netif_t *wifi_init_sta(void);
-static esp_netif_t *wifi_init_softap(void);
+static esp_netif_t *wifi_init_sta(const char* ssid, const char* passwd);
+static esp_netif_t *wifi_init_softap(const char* ssid, const char* passwd);
     
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data);
@@ -111,7 +111,7 @@ void SetUpSta(const char* ssid, const char* passwd)
 
     /* Initialize STA */
     ESP_LOGI(TAG_STA, "ESP_WIFI_MODE_STA");
-    esp_netif_t *esp_netif_sta = wifi_init_sta();
+    esp_netif_t *esp_netif_sta = wifi_init_sta(ssid, passwd);
 
     /* Start WiFi */
     ESP_ERROR_CHECK(esp_wifi_start() );
@@ -150,7 +150,7 @@ void SetUpAp(const char* ssid, const char* passwd)
 
     /* Initialize AP */
     ESP_LOGI(TAG_AP, "ESP_WIFI_MODE_AP");
-    esp_netif_t *esp_netif_ap = wifi_init_softap();
+    esp_netif_t *esp_netif_ap = wifi_init_softap(ssid, passwd);
 
     /* Start WiFi */
     ESP_ERROR_CHECK(esp_wifi_start() );
@@ -184,7 +184,7 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 /* Initialize soft AP */
-esp_netif_t *wifi_init_softap(void)
+esp_netif_t *wifi_init_softap(const char* ssid, const char* passwd)
 {
     esp_netif_t *esp_netif_ap = esp_netif_create_default_wifi_ap();
 
@@ -201,21 +201,25 @@ esp_netif_t *wifi_init_softap(void)
             },
         },
     };
+    memset(&wifi_ap_config.ap.ssid, 0, sizeof(wifi_ap_config.ap.ssid));
+    memcpy(wifi_ap_config.ap.ssid, ssid, strlen(ssid));
+    memset(wifi_ap_config.ap.password, 0, sizeof(wifi_ap_config.ap.password));
+    memcpy(wifi_ap_config.ap.password, passwd, strlen(passwd));
 
-    if (strlen(EXAMPLE_ESP_WIFI_AP_PASSWD) == 0) {
+    if (strlen((char *)wifi_ap_config.ap.password) == 0) {
         wifi_ap_config.ap.authmode = WIFI_AUTH_OPEN;
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_config));
 
     ESP_LOGI(TAG_AP, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
-             EXAMPLE_ESP_WIFI_AP_SSID, EXAMPLE_ESP_WIFI_AP_PASSWD, EXAMPLE_ESP_WIFI_CHANNEL);
+             wifi_ap_config.ap.ssid, wifi_ap_config.ap.password, EXAMPLE_ESP_WIFI_CHANNEL);
 
     return esp_netif_ap;
 }
 
 /* Initialize wifi station */
-esp_netif_t *wifi_init_sta(void)
+esp_netif_t *wifi_init_sta(const char* apssid, const char* passwd)
 {
     esp_netif_t *esp_netif_sta = esp_netif_create_default_wifi_sta();
 
@@ -236,6 +240,10 @@ esp_netif_t *wifi_init_sta(void)
             .failure_retry_cnt = EXAMPLE_ESP_MAXIMUM_RETRY,
         },
     };
+    memset(&wifi_sta_config.sta.ssid, 0, sizeof(wifi_sta_config.sta.ssid));
+    memcpy(wifi_sta_config.sta.ssid, apssid, strlen(apssid));
+    memset(wifi_sta_config.sta.password, 0, sizeof(wifi_sta_config.sta.password));
+    memcpy(wifi_sta_config.sta.password, passwd, strlen(passwd));
 
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_sta_config) );
 

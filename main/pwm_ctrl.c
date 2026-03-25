@@ -22,7 +22,8 @@ static inline uint32_t example_angle_to_compare(int angle)
     return (angle - SERVO_MIN_DEGREE) * (SERVO_MAX_PULSEWIDTH_US - SERVO_MIN_PULSEWIDTH_US) / (SERVO_MAX_DEGREE - SERVO_MIN_DEGREE) + SERVO_MIN_PULSEWIDTH_US;
 }
 
-void PwmCtrl() {
+void PwmCtrlInit()
+{
     ESP_LOGI(TAG, "Create timer and operator");
     comparator_ = NULL;
     mcpwm_timer_handle_t timer = NULL;
@@ -69,6 +70,7 @@ void PwmCtrl() {
     ESP_LOGI(TAG, "Enable and start timer");
     ESP_ERROR_CHECK(mcpwm_timer_enable(timer));
     ESP_ERROR_CHECK(mcpwm_timer_start_stop(timer, MCPWM_TIMER_START_NO_STOP));
+    SetAngle(90);
 }
 
 void SetAngle(int angle)

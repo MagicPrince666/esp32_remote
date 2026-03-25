@@ -4,7 +4,7 @@
 #include "driver/mcpwm_prelude.h"
 #include "driver/gpio.h"
 
-void PwmCtrl();
+void PwmCtrlInit();
 void SetAngle(int angle);
 
 #endif

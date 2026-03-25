@@ -4,6 +4,9 @@
 #include "driver/uart_vfs.h"
 #include "driver/uart.h"
 
+#define TXD1_PIN 18
+#define RXD1_PIN 5
+
 void Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_num, int cts_io_num);
 void SerialRealease();
 int SendData(const char* data, const int lenght);

@@ -19,8 +19,8 @@ typedef struct callback_node {
 extern callback_node_t *callback_list_;
 
 void SelectInit();
-int AddFd(int fd, select_callback_t handler);
-void DeleteFd(int fd);
+int SelectAddFd(int fd, select_callback_t handler);
+void SelectDeleteFd(int fd);
 
 // 遍历接口：返回第 index 个节点，不存在则返回 NULL
 callback_node_t *GetCallbackNode(int index);

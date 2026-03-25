@@ -11,6 +11,8 @@
 
 #include "esp_adc/adc_continuous.h"
 
+#define ADC_MAX_VALUE    4095    // 12bit ADC
+
 typedef void (*rocker_callback_t)(const uint32_t*, const uint32_t);
 
 void RockerInit();

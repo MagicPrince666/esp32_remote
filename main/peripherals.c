@@ -1,26 +1,21 @@
 #include "peripherals.h"
-#include "serial.h"
 #include "rocker.h"
 #include "pwm_ctrl.h"
 #include "softap_sta.h"
-#include "select.h"
 #include "battery.h"
-
-#define TXD1_PIN 18
-#define RXD1_PIN 5
 
 static _lock_t *g_lvgl_mux = NULL;
 
-lv_disp_t *g_disp = NULL;
 static lv_obj_t * title;
 static lv_obj_t * adc_chanals[5];
 static lv_obj_t * battery_label;  // 电池电压标签
 static lv_obj_t * battery_bar;    // 电池电量条
+const uint16_t adc_range[5] = {4095, 4095, 3821, 3740, 4095}; // 遥控1参数
+// const uint16_t adc_range[5] = {4095, 3780, 3970, 3640, 4095}; // 遥控2参数
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal);
 
 void InitAll(lv_disp_t *disp)
 {
-    g_disp = disp;
     lv_obj_t *scr = lv_disp_get_scr_act(disp);
 
     // 获取屏幕分辨率
@@ -58,17 +53,17 @@ void InitAll(lv_disp_t *disp)
 
     // 创建电池电压标签 - 显示在电量条前面
     battery_label = (lv_obj_t *)lv_label_create(scr);
-    lv_label_set_text_static(battery_label, "60%%");
-    lv_obj_set_pos(battery_label, battery_x - 45, battery_y + 2);  // 电量条左侧
+    lv_label_set_text_static(battery_label, "60");
+    lv_obj_set_pos(battery_label, battery_x + 5, battery_y + 1);  // 电量条左侧
 
-    SelectInit();
-    // lv_obj_set_size(title, 100, 20);
-    Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    // SelectInit();
+    // Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     RockerInit();
     SetRockerCallback(ShowAdcData);
-    // g_wifi = new SoftApSta();
-    // g_wifi->Init();
-    // g_wifi->SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
+    // SoftApStaInit();
+    // SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
+    // SetUpAp("Remote", "12345678");
+    PwmCtrlInit();
 }
 
 void SetupLock(_lock_t *lvgl_mux)
@@ -81,9 +76,14 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
     char str[32];
     _lock_acquire(g_lvgl_mux);
     for (uint32_t i = 0; i < channal; i++) {
+#if 0
+        // 获取各通道量程
+        snprintf(str, 32, "%lu", adcs[i]);
+#else
         // ADC 12位精度，转换为百分比（不显示%号）
-        uint32_t percent = adcs[i] * 100 / ADC_MAX_VALUE;
+        uint32_t percent = adcs[i] * 100 / adc_range[i];
         snprintf(str, 32, "%lu", percent);
+#endif
         lv_label_set_text(adc_chanals[i], str);
     }
 

@@ -69,7 +69,7 @@ void Serial(uart_port_t uart_num, int tx_io_num, int rx_io_num, int rts_io_num, 
 void SerialRealease()
 {
     if (ctx.uart_fd_ > 0) {
-        DeleteFd(ctx.uart_fd_);
+        SelectDeleteFd(ctx.uart_fd_);
         close(ctx.uart_fd_);
     }
     free(ctx.rx_buf_);
@@ -77,7 +77,7 @@ void SerialRealease()
 
 void AsyncRecv()
 {
-    AddFd(ctx.uart_fd_, AsyncRecvData);
+    SelectAddFd(ctx.uart_fd_, AsyncRecvData);
 }
 
 int SendData(const char *data, const int lenght)

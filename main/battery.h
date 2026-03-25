@@ -2,9 +2,9 @@
 #define __BATTERY_H__
 
 #include <stdint.h>
+#include "rocker.h"
 
 // 电池电压检测参数
-#define ADC_MAX_VALUE    4095    // 12bit ADC
 #define ADC_VREF         1.1     // ADC 参考电压
 #define R1               1000    // 分压电阻 R1 = 1K
 #define R2               5100    // 分压电阻 R2 = 5.1K
