@@ -5,7 +5,9 @@
 #include "lvgl.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
+#include <unistd.h>
+#include <sys/lock.h>
+#include <sys/param.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,7 +15,7 @@ extern "C" {
 
 void InitAll(lv_disp_t *disp);
 
-void SetupLock(SemaphoreHandle_t lvgl_mux);
+void SetupLock(_lock_t *lvgl_mux);
 
 #ifdef __cplusplus
 } /*extern "C"*/
