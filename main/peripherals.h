@@ -9,6 +9,8 @@
 #include <sys/param.h>
 #ifdef USE_LVGL_DISPLAY
 #include "lvgl.h"
+#else
+#include "lcd_driver.h"
 #endif
 
 #ifdef __cplusplus

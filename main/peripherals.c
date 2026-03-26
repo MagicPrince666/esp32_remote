@@ -118,8 +118,10 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 #else
         // ADC 12位精度，转换为百分比（不显示%号）
         uint32_t percent = adcs[i] * 100 / adc_range[i];
-        snprintf(str, 32, "%lu", percent);
+        int len = snprintf(str, 32, "%lu", percent);
+        str[len] = 0;
 #endif
+        ShowString(10 + i*44, 300, strlen(str) * 8, 16, 16, str);
     }
 
     // 更新电池显示 (使用第5个通道，索引为4)
@@ -128,9 +130,11 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
         uint8_t percent = GetBatteryPercent(voltage);
 
         // 更新百分比显示
-        snprintf(str, 32, "%d%%", percent);
+        int len = snprintf(str, 32, "%d%%", percent);
+        str[len] = 0;
+        ShowString(200, 10, strlen(str) * 8, 16, 16, str);
     }
-    printf("chanal [%ld %ld %ld %ld %ld] Battery[%s]\n", adcs[0], adcs[1], adcs[2], adcs[3], adcs[4], str);
+    // printf("chanal [%ld %ld %ld %ld %ld] Battery[%s]\n", adcs[0], adcs[1], adcs[2], adcs[3], adcs[4], str);
 }
 
 void InitAll(void)
@@ -142,7 +146,7 @@ void InitAll(void)
     SoftApStaInit();
     // SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
     SetUpAp("Remote", "12345678");
-    // PwmCtrlInit();
+    PwmCtrlInit();
 }
 
 #endif
