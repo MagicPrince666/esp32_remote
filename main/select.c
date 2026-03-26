@@ -129,7 +129,7 @@ void select_task(void *arg)
             ESP_LOGE(TAG, "Select failed: errno %d", errno);
             break;
         } else if (s == 0) {
-            ESP_LOGI(TAG, "Timeout has been reached and nothing has been received");
+            // ESP_LOGI(TAG, "Timeout has been reached and nothing has been received");
         } else {
             // 遍历链表检查并调用回调
             node = callback_list_;

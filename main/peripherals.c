@@ -119,7 +119,6 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
         // ADC 12位精度，转换为百分比（不显示%号）
         uint32_t percent = adcs[i] * 100 / adc_range[i];
         snprintf(str, 32, "%lu", percent);
-        printf("chanal %ld [%s]\n", i, str);
 #endif
     }
 
@@ -130,8 +129,8 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 
         // 更新百分比显示
         snprintf(str, 32, "%d%%", percent);
-        printf("Battery [%s]\n", str);
     }
+    printf("chanal [%ld %ld %ld %ld %ld] Battery[%s]\n", adcs[0], adcs[1], adcs[2], adcs[3], adcs[4], str);
 }
 
 void InitAll(void)

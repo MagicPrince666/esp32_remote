@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void example_lvgl_demo_ui(lv_disp_t *disp);
+void InitLvgl(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/
