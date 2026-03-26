@@ -5,7 +5,7 @@
  */
 
 // This demo UI is adapted from LVGL official example: https://docs.lvgl.io/master/examples.html#loader-with-arc
-
+#ifdef USE_LVGL_DISPLAY
 #include "lvgl.h"
 
 static lv_obj_t * btn;
@@ -54,3 +54,4 @@ void example_lvgl_demo_ui(lv_display_t *disp)
     lv_anim_set_values(&a, 0, 100);
     lv_anim_start(&a);
 }
+#endif
