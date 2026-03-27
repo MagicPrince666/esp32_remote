@@ -35,7 +35,7 @@ typedef struct
     uint16_t point_color; // 画笔颜色
 } lcd_dev_t;
 
-static lcd_dev_t g_lcd_info = {240, 320, 0x9341, 0, WHITE, BLUE}; 
+static lcd_dev_t g_lcd_info = {240, 320, 0x9341, 0, WHITE, RED}; 
 uint16_t *g_lines;
 spi_device_handle_t g_spi;
 

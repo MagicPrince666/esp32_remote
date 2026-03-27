@@ -118,7 +118,7 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 #else
         // ADC 12位精度，转换为百分比（不显示%号）
         uint32_t percent = adcs[i] * 100 / adc_range[i];
-        int len = snprintf(str, 32, "%lu", percent);
+        int len = snprintf(str, 32, "%3lu", percent);
         str[len] = 0;
 #endif
         ShowString(10 + i*44, 300, strlen(str) * 8, 16, 16, str);
@@ -130,7 +130,7 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
         uint8_t percent = GetBatteryPercent(voltage);
 
         // 更新百分比显示
-        int len = snprintf(str, 32, "%d%%", percent);
+        int len = snprintf(str, 32, "%3d%%", percent);
         str[len] = 0;
         ShowString(200, 10, strlen(str) * 8, 16, 16, str);
     }
