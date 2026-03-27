@@ -152,7 +152,7 @@ void adc_read_task(void *param)
                  * To avoid a task watchdog timeout, add a delay here. When you replace the way you process the data,
                  * usually you don't need this delay (as this task will block for a while).
                  */
-                vTaskDelay(10);
+                vTaskDelay(10 / portTICK_PERIOD_MS);
             } else if (ret == ESP_ERR_TIMEOUT) {
                 // We try to read `EXAMPLE_READ_LEN` until API returns timeout, which means there's no available data
                 break;

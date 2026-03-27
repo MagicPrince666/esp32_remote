@@ -31,4 +31,6 @@ void SetUpAp(const char* ssid, const char* passwd);
 
 void SetIpCallback(ip_callback_t handler);
 
+void SetStaIpCallback(ip_callback_t handler);
+
 #endif

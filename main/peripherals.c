@@ -5,6 +5,9 @@
 #include "battery.h"
 #include "select.h"
 #include "serial.h"
+#include "esp_log.h"
+#include <sys/param.h>
+#include <string.h>
 
 #ifdef USE_LVGL_DISPLAY
 static _lock_t *g_lvgl_mux = NULL;
@@ -13,8 +16,8 @@ static lv_obj_t * adc_chanals[5];
 static lv_obj_t * battery_label;  // 电池电压标签
 static lv_obj_t * battery_bar;    // 电池电量条
 #endif
-// const uint16_t adc_range[5] = {4095, 4095, 3821, 3740, 4095}; // 遥控1参数
-const uint16_t adc_range[5] = {4095, 3780, 3970, 3640, 4095}; // 遥控2参数
+const uint16_t adc_range[5] = {4095, 4095, 3821, 3740, 4095}; // 遥控1参数
+// const uint16_t adc_range[5] = {4095, 3780, 3970, 3640, 4095}; // 遥控2参数
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal);
 
 #ifdef USE_LVGL_DISPLAY
@@ -108,6 +111,68 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 }
 #else
 
+struct RemoteState {
+    bool lose_signal;   // 失控标识
+
+    bool front; // 前进按钮
+    bool back; // 后退按钮
+    bool left; // 左转按钮
+    bool right; // 右转按钮
+    bool select; // 选择按钮
+    bool start; // 开始按钮
+    bool l1; // 左顶部按钮1
+    bool l2; // 左顶部按钮2
+    bool r1; // 右顶部按钮1
+    bool r2; // 右顶部按钮2
+    bool adl; // 左摇杆按钮
+    bool adr; // 右摇杆按钮
+    bool triangle; // 三角按钮
+    bool quadrilateral; // 四边形按钮
+    bool rotundity; // 园形按钮
+    bool fork; // 叉按钮
+    float adslx;   // 左摇杆x轴
+    float adsly;   // 左摇杆y轴
+    float adsrx;   // 右摇杆x轴
+    float adsry;   // 右摇杆y轴
+    float ads[12];   // 扩展通道 sbus 16路通道都是模拟量
+};
+
+static const char *TAG = "peripherals";
+static int sock = -1;  // UDP socket
+static struct sockaddr_in dest_addr;
+static bool udp_initialized = false;
+
+// UDP初始化函数
+static int udp_init(const char *ip, uint16_t port)
+{
+    int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (s < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        return -1;
+    }
+
+    dest_addr.sin_addr.s_addr = inet_addr(ip);
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(port);
+
+    ESP_LOGI(TAG, "UDP initialized, target: %s:%d", ip, port);
+    return s;
+}
+
+// 发送RemoteState数据
+static void send_remote_state(const struct RemoteState *state)
+{
+    if (!udp_initialized || sock < 0) {
+        return;
+    }
+
+    int err = sendto(sock, state, sizeof(struct RemoteState), 0, 
+                    (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0) {
+        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+    }
+}
+
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 {
     char str[32];
@@ -134,7 +199,32 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
         str[len] = 0;
         ShowString(200, 10, strlen(str) * 8, 16, 16, str);
     }
-    // printf("chanal [%ld %ld %ld %ld %ld] Battery[%s]\n", adcs[0], adcs[1], adcs[2], adcs[3], adcs[4], str);
+    
+    // 创建RemoteState结构体并发送
+    struct RemoteState state = {0};
+    
+    // 将摇杆数据转换为0-1的浮点数
+    // 左摇杆X轴 (adc_raw_[0])
+    state.adslx = (float)adcs[0] / adc_range[0];
+    if (state.adslx < 0.0f) state.adslx = 0.0f;
+    if (state.adslx > 1.0f) state.adslx = 1.0f;
+    // 左摇杆Y轴 (adc_raw_[1])
+    state.adsly = (float)adcs[1] / adc_range[1];
+    if (state.adsly < 0.0f) state.adsly = 0.0f;
+    if (state.adsly > 1.0f) state.adsly = 1.0f;
+    // 右摇杆X轴 (adc_raw_[2])
+    state.adsrx = (float)adcs[2] / adc_range[2];
+    if (state.adsrx < 0.0f) state.adsrx = 0.0f;
+    if (state.adsrx > 1.0f) state.adsrx = 1.0f;
+    state.adsrx = 1.0f - state.adsrx; // 反转X轴方向
+    // 右摇杆Y轴 (adc_raw_[3])
+    state.adsry = (float)adcs[3] / adc_range[3];
+    if (state.adsry < 0.0f) state.adsry = 0.0f;
+    if (state.adsry > 1.0f) state.adsry = 1.0f;
+    state.adsry = 1.0f - state.adsry; // 反转Y轴方向
+    
+    // 发送RemoteState到对端
+    send_remote_state(&state);
 }
 
 void ShowIp(ip_event_ap_staipassigned_t* event)
@@ -146,6 +236,29 @@ void ShowIp(ip_event_ap_staipassigned_t* event)
     len = snprintf(str, sizeof(str), IPSTR, IP2STR(&event->ip));
     str[len] = 0;
     ShowString(10, 70, strlen(str) * 8, 16, 16, str);
+    sock = udp_init("192.168.34.168", 5555);
+    if (sock >= 0) {
+        udp_initialized = true;
+    }
+}
+
+void ShowIpAndConnect(ip_event_ap_staipassigned_t* event)
+{
+    char str[64];
+    int len = snprintf(str, sizeof(str), MACSTR, MAC2STR(event->mac));
+    str[len] = 0;
+    ShowString(10, 50, strlen(str) * 8, 16, 16, str);
+    len = snprintf(str, sizeof(str), IPSTR, IP2STR(&event->ip));
+    str[len] = 0;
+    ShowString(10, 70, strlen(str) * 8, 16, 16, str);
+    
+    // 初始化UDP连接到对端的5555端口
+    char ip_str[16];
+    snprintf(ip_str, sizeof(ip_str), IPSTR, IP2STR(&event->ip));
+    sock = udp_init(ip_str, 5555);
+    if (sock >= 0) {
+        udp_initialized = true;
+    }
 }
 
 void InitAll(void)
@@ -155,9 +268,10 @@ void InitAll(void)
     RockerInit();
     SetRockerCallback(ShowAdcData);
     SoftApStaInit();
-    SetIpCallback(ShowIp);
-    // SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
-    SetUpAp("Remote", "12345678");
+    SetIpCallback(ShowIpAndConnect);
+    SetStaIpCallback(ShowIp);
+    SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
+    // SetUpAp("Remote", "12345678");
     PwmCtrlInit();
 }
 

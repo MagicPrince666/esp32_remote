@@ -38,6 +38,7 @@ typedef struct
 static lcd_dev_t g_lcd_info = {240, 320, 0x9341, 0, WHITE, RED}; 
 uint16_t *g_lines;
 spi_device_handle_t g_spi;
+static SemaphoreHandle_t g_lcd_mutex = NULL;
 
 DRAM_ATTR static const lcd_init_cmd_t ili_init_cmds[] = {
     /* Power control B, power control = 0, DC_ENA = 1 */
@@ -373,6 +374,17 @@ void LCD_ShowChar(spi_device_handle_t spi, uint16_t x, uint16_t y, uint8_t num, 
 
 void ShowString(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t size, char *p)
 {
+    if (g_lcd_mutex == NULL) {
+        ESP_LOGE(TAG, "LCD mutex not initialized");
+        return;
+    }
+    
+    // 获取互斥锁
+    if (xSemaphoreTake(g_lcd_mutex, portMAX_DELAY) != pdTRUE) {
+        ESP_LOGE(TAG, "Failed to take LCD mutex");
+        return;
+    }
+    
     uint16_t x0 = x;
     width += x;
     height += y;
@@ -388,6 +400,9 @@ void ShowString(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t
         x += size / 2;
         p++;
     }
+    
+    // 释放互斥锁
+    xSemaphoreGive(g_lcd_mutex);
 }
 
 void InitLCD(void)
@@ -414,6 +429,11 @@ void InitLCD(void)
     // Attach the LCD to the SPI bus
     ret = spi_bus_add_device(LCD_HOST, &devcfg, &g_spi);
     ESP_ERROR_CHECK(ret);
+    // Create mutex for LCD operations
+    g_lcd_mutex = xSemaphoreCreateMutex();
+    if (g_lcd_mutex == NULL) {
+        ESP_LOGE(TAG, "Failed to create LCD mutex");
+    }
     // Initialize the LCD
     lcd_init(g_spi);
 

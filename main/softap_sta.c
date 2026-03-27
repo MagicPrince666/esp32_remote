@@ -62,7 +62,8 @@
 static const char *TAG_AP = "WiFi SoftAP";
 static const char *TAG_STA = "WiFi Sta";
 
-static ip_callback_t g_ip_callback = NULL; // 接收回调
+static ip_callback_t g_ip_callback = NULL;
+static ip_callback_t g_sta_ip_callback = NULL;
 
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num;
@@ -116,6 +117,11 @@ void SoftApStaInit() {
 void SetIpCallback(ip_callback_t handler)
 {
     g_ip_callback = handler;
+}
+
+void SetStaIpCallback(ip_callback_t handler)
+{
+    g_sta_ip_callback = handler;
 }
 
 void SetUpSta(const char* ssid, const char* passwd)
@@ -191,6 +197,14 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
         ESP_LOGI(TAG_STA, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
+        if (g_sta_ip_callback) {
+            ip_event_ap_staipassigned_t data;
+            uint8_t mac[6];
+            esp_wifi_get_mac(WIFI_IF_STA, mac);
+            memcpy(data.mac, mac, 6);
+            data.ip = event->ip_info.ip;
+            g_sta_ip_callback(&data);
+        }
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_AP_STAIPASSIGNED) {
