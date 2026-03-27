@@ -21,7 +21,7 @@
 #include "lvgl_demo_ui.h"
 #include "esp_log.h"
 #include "common.h"
-#include "peripherals.h"
+#include "business.h"
 
 static lv_obj_t * btn;
 static lv_display_rotation_t rotation = LV_DISP_ROTATION_0;

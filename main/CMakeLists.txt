@@ -7,6 +7,6 @@ idf_component_register(SRCS
     battery.c
     serial.c
     select.c
-    peripherals.c
+    business.c
     softap_sta.c
     INCLUDE_DIRS ".")

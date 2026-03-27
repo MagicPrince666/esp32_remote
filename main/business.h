@@ -1,5 +1,5 @@
-#ifndef __PERIPHERAILS_H__
-#define __PERIPHERAILS_H__
+#ifndef __BUSINESS_H__
+#define __BUSINESS_H__
 
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
