@@ -137,6 +137,17 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
     // printf("chanal [%ld %ld %ld %ld %ld] Battery[%s]\n", adcs[0], adcs[1], adcs[2], adcs[3], adcs[4], str);
 }
 
+void ShowIp(ip_event_ap_staipassigned_t* event)
+{
+    char str[64];
+    int len = snprintf(str, sizeof(str), MACSTR, MAC2STR(event->mac));
+    str[len] = 0;
+    ShowString(10, 50, strlen(str) * 8, 16, 16, str);
+    len = snprintf(str, sizeof(str), IPSTR, IP2STR(&event->ip));
+    str[len] = 0;
+    ShowString(10, 70, strlen(str) * 8, 16, 16, str);
+}
+
 void InitAll(void)
 {
     SelectInit();
@@ -144,6 +155,7 @@ void InitAll(void)
     RockerInit();
     SetRockerCallback(ShowAdcData);
     SoftApStaInit();
+    SetIpCallback(ShowIp);
     // SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
     SetUpAp("Remote", "12345678");
     PwmCtrlInit();

@@ -62,6 +62,8 @@
 static const char *TAG_AP = "WiFi SoftAP";
 static const char *TAG_STA = "WiFi Sta";
 
+static ip_callback_t g_ip_callback = NULL; // 接收回调
+
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num;
 static void softap_set_dns_addr(esp_netif_t *esp_netif_ap,esp_netif_t *esp_netif_sta);
@@ -100,9 +102,20 @@ void SoftApStaInit() {
                     NULL,
                     NULL));
 
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+                    IP_EVENT_AP_STAIPASSIGNED,
+                    &wifi_event_handler,
+                    NULL,
+                    NULL));
+
     /*Initialize WiFi */
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+}
+
+void SetIpCallback(ip_callback_t handler)
+{
+    g_ip_callback = handler;
 }
 
 void SetUpSta(const char* ssid, const char* passwd)
@@ -180,6 +193,15 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
         ESP_LOGI(TAG_STA, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_AP_STAIPASSIGNED) {
+        // DHCP 服务器给客户端分配了 IP
+        ip_event_ap_staipassigned_t* event = (ip_event_ap_staipassigned_t*) event_data;
+        // 打印 MAC 地址和分配的 IP 地址
+        ESP_LOGI(TAG_AP, "Station "MACSTR" assigned IP: "IPSTR, 
+                 MAC2STR(event->mac), IP2STR(&event->ip));
+        if (g_ip_callback) {
+            g_ip_callback(event);
+        }
     }
 }
 

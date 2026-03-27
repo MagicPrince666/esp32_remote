@@ -21,10 +21,14 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+typedef void (*ip_callback_t)(ip_event_ap_staipassigned_t*);
+
 void SoftApStaInit();
 
 void SetUpSta(const char* ssid, const char* passwd);
 
 void SetUpAp(const char* ssid, const char* passwd);
+
+void SetIpCallback(ip_callback_t handler);
 
 #endif
