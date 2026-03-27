@@ -21,7 +21,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-typedef void (*ip_callback_t)(ip_event_ap_staipassigned_t*);
+typedef void (*ip_callback_t)(ip_event_ap_staipassigned_t*, bool);
 
 void SoftApStaInit();
 

@@ -191,6 +191,12 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
         wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *) event_data;
         ESP_LOGI(TAG_AP, "Station "MACSTR" left, AID=%d, reason:%d",
                  MAC2STR(event->mac), event->aid, event->reason);
+        if (g_ip_callback) {
+            ip_event_ap_staipassigned_t data;
+            memcpy(data.mac, event->mac, 6);
+            data.ip.addr = 0;
+            g_ip_callback(&data, false);
+        }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
         ESP_LOGI(TAG_STA, "Station started");
@@ -203,7 +209,7 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
             esp_wifi_get_mac(WIFI_IF_STA, mac);
             memcpy(data.mac, mac, 6);
             data.ip = event->ip_info.ip;
-            g_sta_ip_callback(&data);
+            g_sta_ip_callback(&data, true);
         }
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
@@ -214,7 +220,16 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
         ESP_LOGI(TAG_AP, "Station "MACSTR" assigned IP: "IPSTR, 
                  MAC2STR(event->mac), IP2STR(&event->ip));
         if (g_ip_callback) {
-            g_ip_callback(event);
+            g_ip_callback(event, true);
+        }
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        if (g_ip_callback) {
+            ip_event_ap_staipassigned_t data;
+            uint8_t mac[6];
+            esp_wifi_get_mac(WIFI_IF_STA, mac);
+            memcpy(data.mac, mac, 6);
+            data.ip.addr = 0;
+            g_sta_ip_callback(&data, false);
         }
     }
 }

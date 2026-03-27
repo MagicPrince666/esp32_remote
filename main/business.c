@@ -227,37 +227,57 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
     send_remote_state(&state);
 }
 
-void ShowIp(ip_event_ap_staipassigned_t* event)
+void ShowIp(ip_event_ap_staipassigned_t* event, bool connect)
 {
     char str[64];
     int len = snprintf(str, sizeof(str), MACSTR, MAC2STR(event->mac));
     str[len] = 0;
-    ShowString(10, 50, strlen(str) * 8, 16, 16, str);
+    ShowString(48, 90, strlen(str) * 8, 16, 16, str);
     len = snprintf(str, sizeof(str), IPSTR, IP2STR(&event->ip));
     str[len] = 0;
-    ShowString(10, 70, strlen(str) * 8, 16, 16, str);
-    sock = udp_init("192.168.34.168", 5555);
-    if (sock >= 0) {
-        udp_initialized = true;
+    ShowString(48, 110, strlen(str) * 8, 16, 16, str);
+
+    if (connect) {
+        if (sock > 0) {
+            return;
+        }
+        sock = udp_init("192.168.34.168", 5555);
+        if (sock >= 0) {
+            udp_initialized = true;
+        }
+    } else {
+        if (sock >= 0) {
+            close(sock);
+            udp_initialized = false;
+        }
     }
 }
 
-void ShowIpAndConnect(ip_event_ap_staipassigned_t* event)
+void ShowIpAndConnect(ip_event_ap_staipassigned_t* event, bool connect)
 {
     char str[64];
     int len = snprintf(str, sizeof(str), MACSTR, MAC2STR(event->mac));
     str[len] = 0;
-    ShowString(10, 50, strlen(str) * 8, 16, 16, str);
+    ShowString(48, 50, strlen(str) * 8, 16, 16, str);
     len = snprintf(str, sizeof(str), IPSTR, IP2STR(&event->ip));
     str[len] = 0;
-    ShowString(10, 70, strlen(str) * 8, 16, 16, str);
-    
-    // 初始化UDP连接到对端的5555端口
-    char ip_str[16];
-    snprintf(ip_str, sizeof(ip_str), IPSTR, IP2STR(&event->ip));
-    sock = udp_init(ip_str, 5555);
-    if (sock >= 0) {
-        udp_initialized = true;
+    ShowString(48, 70, strlen(str) * 8, 16, 16, str);
+    if (connect) {
+        // 初始化UDP连接到对端的5555端口
+        if (sock > 0) {
+            return;
+        }
+        char ip_str[16];
+        snprintf(ip_str, sizeof(ip_str), IPSTR, IP2STR(&event->ip));
+        sock = udp_init(ip_str, 5555);
+        if (sock >= 0) {
+            udp_initialized = true;
+        }
+    } else {
+        if (sock >= 0) {
+            close(sock);
+            udp_initialized = false;
+        }
     }
 }
 
