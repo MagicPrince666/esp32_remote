@@ -226,14 +226,13 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
             // 计算相对于中位值的偏移量
             int32_t offset = (int32_t)adcs[i] - (int32_t)center;
             
-            // 计算线性化后的值，中心位置为50%
-            // 使用量程的一半作为最大偏移量
-            uint32_t max_offset = adc_range[i] / 2;
-            
             // 将偏移量转换为百分比，中心位置为50%
             // 超过中位值的按50-100显示，增量方向从小到大
             // 低于中位值的按0-49显示，增长方向为从大到小
             if (offset >= 0) {
+                // 计算线性化后的值，中心位置为50%
+                // 使用量程的一半作为最大偏移量
+                uint32_t max_offset = adc_range[i] / 2;
                 // 超过中位值，按50-100显示
                 percent[i] = 50 + (offset * 50) / max_offset;
             } else {
