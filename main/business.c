@@ -67,6 +67,11 @@ void InitAll(lv_disp_t *disp)
     // Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     RockerInit();
     SetRockerCallback(ShowAdcData);
+    
+    // 等待一段时间让ADC稳定后进行中位值校准
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    CalibrateAdcCenter();
+    
     // SoftApStaInit();
     // SetUpSta("OpenWrt_R619ac_2.4G", "67123236");
     // SetUpAp("Remote", "12345678");
@@ -82,15 +87,45 @@ void SetupLock(_lock_t *lvgl_mux)
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 {
     char str[32];
+    int32_t percent[5] = {0};
     _lock_acquire(g_lvgl_mux);
     for (uint32_t i = 0; i < channal; i++) {
 #if 0
         // 获取各通道量程
         snprintf(str, 32, "%lu", adcs[i]);
 #else
-        // ADC 12位精度，转换为百分比（不显示%号）
-        uint32_t percent = adcs[i] * 100 / adc_range[i];
-        snprintf(str, 32, "%lu", percent);
+        if (i == 4) {
+            percent[i] = adcs[i] * 100 / adc_range[i];
+        } else {
+            // 获取当前通道的中位值
+            uint32_t center = GetAdcCenterValue(i);
+            
+            // 计算相对于中位值的偏移量
+            int32_t offset = (int32_t)adcs[i] - (int32_t)center;
+            
+            // 计算线性化后的值，中心位置为50%
+            // 使用量程的一半作为最大偏移量
+            uint32_t max_offset = adc_range[i] / 2;
+            
+            // 将偏移量转换为百分比，中心位置为50%
+            // 超过中位值的按50-100显示，增量方向从小到大
+            // 低于中位值的按0-49显示，增长方向为从大到小
+            if (offset >= 0) {
+                // 超过中位值，按50-100显示
+                percent[i] = 50 + (offset * 50) / max_offset;
+            } else {
+                // 低于中位值，按0-49显示
+                // 使用绝对值计算偏移量，然后从50减去
+                percent[i] = 50 - ((-offset) * 50) / center;
+            }
+            
+            // 限制百分比范围在0-100之间
+            if (percent[i] < 0) percent[i] = 0;
+            if (percent[i] > 100) percent[i] = 100;
+        }
+        
+        int len = snprintf(str, 32, "%3ld", percent[i]);
+        str[len] = 0;
 #endif
         lv_label_set_text(adc_chanals[i], str);
     }
@@ -169,21 +204,50 @@ static void send_remote_state(const struct RemoteState *state)
     int err = sendto(sock, state, sizeof(struct RemoteState), 0, 
                     (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (err < 0) {
-        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+        // ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
     }
 }
 
 void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
 {
     char str[32];
+    int32_t percent[5] = {0};
     for (uint32_t i = 0; i < channal; i++) {
 #if 0
         // 获取各通道量程
         snprintf(str, 32, "%lu", adcs[i]);
 #else
-        // ADC 12位精度，转换为百分比（不显示%号）
-        uint32_t percent = adcs[i] * 100 / adc_range[i];
-        int len = snprintf(str, 32, "%3lu", percent);
+        if (i == 4) {
+            percent[i] = adcs[i] * 100 / adc_range[i];
+        } else {
+            // 获取当前通道的中位值
+            uint32_t center = GetAdcCenterValue(i);
+            
+            // 计算相对于中位值的偏移量
+            int32_t offset = (int32_t)adcs[i] - (int32_t)center;
+            
+            // 计算线性化后的值，中心位置为50%
+            // 使用量程的一半作为最大偏移量
+            uint32_t max_offset = adc_range[i] / 2;
+            
+            // 将偏移量转换为百分比，中心位置为50%
+            // 超过中位值的按50-100显示，增量方向从小到大
+            // 低于中位值的按0-49显示，增长方向为从大到小
+            if (offset >= 0) {
+                // 超过中位值，按50-100显示
+                percent[i] = 50 + (offset * 50) / max_offset;
+            } else {
+                // 低于中位值，按0-49显示
+                // 使用绝对值计算偏移量，然后从50减去
+                percent[i] = 50 - ((-offset) * 50) / center;
+            }
+            
+            // 限制百分比范围在0-100之间
+            if (percent[i] < 0) percent[i] = 0;
+            if (percent[i] > 100) percent[i] = 100;
+        }
+        
+        int len = snprintf(str, 32, "%3ld", percent[i]);
         str[len] = 0;
 #endif
         ShowString(10 + i*44, 300, strlen(str) * 8, 16, 16, str);
@@ -205,20 +269,20 @@ void ShowAdcData(const uint32_t* adcs, const uint32_t channal)
     
     // 将摇杆数据转换为0-1的浮点数
     // 左摇杆X轴 (adc_raw_[0])
-    state.adslx = (float)adcs[0] / adc_range[0];
+    state.adslx = (float)percent[0] / 100.0f;
     if (state.adslx < 0.0f) state.adslx = 0.0f;
     if (state.adslx > 1.0f) state.adslx = 1.0f;
     // 左摇杆Y轴 (adc_raw_[1])
-    state.adsly = (float)adcs[1] / adc_range[1];
+    state.adsly = (float)percent[1] / 100.0f;
     if (state.adsly < 0.0f) state.adsly = 0.0f;
     if (state.adsly > 1.0f) state.adsly = 1.0f;
     // 右摇杆X轴 (adc_raw_[2])
-    state.adsrx = (float)adcs[2] / adc_range[2];
+    state.adsrx = (float)percent[2] / 100.0f;
     if (state.adsrx < 0.0f) state.adsrx = 0.0f;
     if (state.adsrx > 1.0f) state.adsrx = 1.0f;
     state.adsrx = 1.0f - state.adsrx; // 反转X轴方向
     // 右摇杆Y轴 (adc_raw_[3])
-    state.adsry = (float)adcs[3] / adc_range[3];
+    state.adsry = (float)percent[3] / 100.0f;
     if (state.adsry < 0.0f) state.adsry = 0.0f;
     if (state.adsry > 1.0f) state.adsry = 1.0f;
     state.adsry = 1.0f - state.adsry; // 反转Y轴方向
@@ -287,6 +351,11 @@ void InitAll(void)
     Serial(UART_NUM_1, TXD1_PIN, RXD1_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     RockerInit();
     SetRockerCallback(ShowAdcData);
+    
+    // 等待一段时间让ADC稳定后进行中位值校准
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    CalibrateAdcCenter();
+    
     SoftApStaInit();
     SetIpCallback(ShowIpAndConnect);
     SetStaIpCallback(ShowIp);
